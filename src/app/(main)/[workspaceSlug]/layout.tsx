@@ -1,4 +1,4 @@
-import Sidebar from "@/components/layout/sidebar";
+import WorkspaceShell from "@/components/layout/workspaceShell";
 
 type Props = {
   children: React.ReactNode;
@@ -14,11 +14,8 @@ export default async function WorkspaceLayout({ children, params }: Props) {
     .join(" ");
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar workspaceSlug={workspaceSlug} workspaceName={workspaceName} />
-      <div className="flex-1 flex flex-col overflow-hidden ml-60">
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </div>
-    </div>
+    <WorkspaceShell workspaceSlug={workspaceSlug} workspaceName={workspaceName}>
+      {children}
+    </WorkspaceShell>
   );
 }
