@@ -7,12 +7,14 @@ import { formatDate } from "@/lib/utils";
 
 interface ProjectCardProps {
   project: {
-    id: string;
+    _id: string;
     name: string;
     description?: string;
     color: string;
     status: string;
     createdAt: string;
+    taskCount: number;
+    completedCount: number;
   };
   workspaceSlug: string;
 }
@@ -44,7 +46,7 @@ export default function ProjectCard({
         </button>
       </div>
 
-      <Link href={`/${workspaceSlug}/projects/${project.id}`} className="block">
+      <Link href={`/${workspaceSlug}/projects/${project._id}`} className="block">
         <h3 className="font-semibold text-sm mb-1 hover:underline">
           {project.name}
         </h3>
@@ -67,6 +69,21 @@ export default function ProjectCard({
           }}
         >
           {project.status}
+        </span>
+      </div>
+
+      <div className="mt-3 pt-3 border-t flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">
+          {project.taskCount} task{project.taskCount !== 1 ? "s" : ""}
+        </span>
+        <span
+          className="text-xs px-2 py-0.5 rounded-full font-medium"
+          style={{
+            backgroundColor: project.color + "20",
+            color: project.color,
+          }}
+        >
+          {project.completedCount}/{project.taskCount} done
         </span>
       </div>
 

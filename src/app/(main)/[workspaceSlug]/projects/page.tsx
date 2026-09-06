@@ -1,32 +1,8 @@
+import { getProjectsByWorkspace } from "@/lib/dal/project";
+import { getWorkspaceBySlug } from "@/lib/dal/workspace";
+import { notFound } from "next/navigation";
 import ProjectCard from "@/components/projects/project-card";
 import { Plus } from "lucide-react";
-
-const MOCK_PROJECTS = [
-  {
-    id: "1",
-    name: "Website Redesign",
-    description: "Complete overhaul of the company website with modern design",
-    status: "active",
-    color: "#6366f1",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Mobile App Development",
-    description: "Build iOS and Android apps for the platform",
-    status: "active",
-    color: "#22c55e",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    name: "API Integration",
-    description: "Integrate third-party payment and analytics APIs",
-    status: "active",
-    color: "#f59e0b",
-    createdAt: new Date().toISOString(),
-  },
-];
 
 type Props = {
   params: Promise<{ workspaceSlug: string }>;
@@ -35,11 +11,16 @@ type Props = {
 export default async function ProjectsPage({ params }: Props) {
   const { workspaceSlug } = await params;
 
-  const projects = MOCK_PROJECTS;
+  const workspace = await getWorkspaceBySlug(workspaceSlug);
+
+  if (!workspace) {
+    notFound();
+  }
+
+  const projects = await getProjectsByWorkspace(workspace._id);
 
   return (
     <div className="p-6 space-y-6">
-
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
@@ -54,15 +35,17 @@ export default async function ProjectsPage({ params }: Props) {
       </div>
 
       {projects.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <p className="text-lg font-medium">No projects found</p>
-          <p className="text-sm mt-1">Create your first project</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-lg font-medium">Koi project nahi hai</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Apna pehla project banao
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <ProjectCard
-              key={project.id}
+              key={project._id}
               project={project}
               workspaceSlug={workspaceSlug}
             />
