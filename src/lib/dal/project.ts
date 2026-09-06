@@ -67,19 +67,24 @@ export async function getProjectsByWorkspace(
 }
 
 export async function getProjectById(projectId: string) {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const project = await Project.findById(projectId).lean();
-  if (!project) return null;
+    const project = await Project.findById(projectId).lean();
+    if (!project) return null;
 
-  return {
-    _id: project._id.toString(),
-    workspaceId: project.workspaceId.toString(),
-    name: project.name,
-    description: project.description,
-    color: project.color,
-    status: project.status,
-    createdBy: project.createdBy.toString(),
-    createdAt: project.createdAt.toISOString(),
-  };
+    return {
+      _id: project._id.toString(),
+      workspaceId: project.workspaceId.toString(),
+      name: project.name,
+      description: project.description,
+      color: project.color,
+      status: project.status,
+      createdBy: project.createdBy.toString(),
+      createdAt: project.createdAt.toISOString(),
+    };
+  } catch (error) {
+    console.error("Failed to fetch project:", error);
+    throw new Error("Project load nahi ho saka");
+  }
 }

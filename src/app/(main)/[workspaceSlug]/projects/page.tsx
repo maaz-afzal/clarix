@@ -36,9 +36,9 @@ export default async function ProjectsPage({ params }: Props) {
 
       {projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-medium">Koi project nahi hai</p>
+          <p className="text-lg font-medium">No Project Found</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Apna pehla project banao
+            Create your first project
           </p>
         </div>
       ) : (
