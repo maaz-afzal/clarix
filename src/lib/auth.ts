@@ -4,8 +4,9 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import type { NextAuthConfig } from "next-auth";
 
-export const { auth, signIn, signOut, handlers } = NextAuth({
+const authConfig: NextAuthConfig = {
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
@@ -20,9 +21,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
       },
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
         try {
           await connectDB();
@@ -31,18 +30,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
             email: (credentials.email as string).toLowerCase(),
           }).select("+password");
 
-          if (!user || !user.password) {
-            return null;
-          }
+          if (!user || !user.password) return null;
 
           const isPasswordValid = await bcrypt.compare(
             credentials.password as string,
             user.password,
           );
 
-          if (!isPasswordValid) {
-            return null;
-          }
+          if (!isPasswordValid) return null;
 
           return {
             id: user._id.toString(),
@@ -59,6 +54,23 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
   ],
 
   callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const pathname = nextUrl.pathname;
+
+      const isPublicRoute =
+        pathname === "/" ||
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/register") ||
+        pathname.startsWith("/api/auth");
+
+      if (isPublicRoute) return true;
+
+      if (!isLoggedIn) return false;
+
+      return true;
+    },
+
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
@@ -128,4 +140,6 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
   },
-});
+};
+
+export const { auth, signIn, signOut, handlers } = NextAuth(authConfig);

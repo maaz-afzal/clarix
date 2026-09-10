@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/onboarding";
+
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -15,23 +18,21 @@ export default function LoginForm() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
 
     try {
       const result = await signIn("credentials", {
-        email,
-        password,
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
         redirect: false,
       });
 
       if (result?.error) {
-        toast.error("Email or password is incorrect");
+        toast.error("Email ya password galat hai");
         return;
       }
 
       toast.success("Logged in successfully!");
-      router.push("/onboarding");
+      router.push(callbackUrl);
       router.refresh();
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -43,7 +44,7 @@ export default function LoginForm() {
   async function handleGoogleLogin() {
     setIsGoogleLoading(true);
     try {
-      await signIn("google", { redirectTo: "/onboarding" });
+      await signIn("google", { redirectTo: callbackUrl });
     } catch {
       toast.error("Google login failed");
       setIsGoogleLoading(false);

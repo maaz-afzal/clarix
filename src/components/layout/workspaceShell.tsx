@@ -8,12 +8,18 @@ type Props = {
   children: React.ReactNode;
   workspaceSlug: string;
   workspaceName: string;
+  user: {
+    name: string;
+    email: string;
+    image?: string;
+  };
 };
 
 export default function WorkspaceShell({
   children,
   workspaceSlug,
   workspaceName,
+  user
 }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -28,6 +34,7 @@ export default function WorkspaceShell({
         workspaceName={workspaceName}
         isCollapsed={isCollapsed}
         onToggle={toggleCollapse}
+        user={user}
       />
 
       <div
