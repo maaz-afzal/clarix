@@ -1,7 +1,7 @@
+import { requireWorkspaceMember } from "@/lib/authorization";
 import { getProjectsByWorkspace } from "@/lib/dal/project";
-import { getWorkspaceBySlug } from "@/lib/dal/workspace";
-import { notFound } from "next/navigation";
 import ProjectCard from "@/components/projects/project-card";
+import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
 type Props = {
@@ -11,13 +11,9 @@ type Props = {
 export default async function ProjectsPage({ params }: Props) {
   const { workspaceSlug } = await params;
 
-  const workspace = await getWorkspaceBySlug(workspaceSlug);
+  const { membership } = await requireWorkspaceMember(workspaceSlug);
 
-  if (!workspace) {
-    notFound();
-  }
-
-  const projects = await getProjectsByWorkspace(workspace._id);
+  const projects = await getProjectsByWorkspace(membership.workspaceId);
 
   return (
     <div className="p-6 space-y-6">
@@ -28,17 +24,22 @@ export default async function ProjectsPage({ params }: Props) {
             {projects.length} project{projects.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          New Project
-        </button>
+
+        {["owner", "admin"].includes(membership.role) && (
+          <button className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" />
+            New Project
+          </button>
+        )}
       </div>
 
       {projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-medium">No Project Found</p>
+          <p className="text-lg font-medium">Koi project nahi hai</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Create your first project
+            {["owner", "admin"].includes(membership.role)
+              ? "Apna pehla project banao"
+              : "Abhi koi project nahi hai is workspace mein"}
           </p>
         </div>
       ) : (

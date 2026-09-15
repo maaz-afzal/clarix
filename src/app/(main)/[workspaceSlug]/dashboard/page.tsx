@@ -1,23 +1,22 @@
-import { getDashboardStats } from "@/lib/dal/dashboard"
-import { getWorkspaceBySlug } from "@/lib/dal/workspace"
-import { notFound } from "next/navigation"
+import { requireWorkspaceMember } from "@/lib/authorization";
+import { getDashboardStats } from "@/lib/dal/dashboard";
 import {
   FolderKanban,
   CheckSquare,
   AlertCircle,
   TrendingUp,
-} from "lucide-react"
+} from "lucide-react";
 
 type Props = {
-  params: Promise<{ workspaceSlug: string }>
-}
+  params: Promise<{ workspaceSlug: string }>;
+};
 
 interface StatCardProps {
-  label: string
-  value: number
-  icon: React.ElementType
-  description: string
-  highlight?: boolean
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  description: string;
+  highlight?: boolean;
 }
 
 function StatCard({
@@ -29,46 +28,38 @@ function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`rounded-lg border p-5 bg-card ${
-        highlight ? "border-destructive/50" : ""
-      }`}
+      className={`rounded-lg border p-5 bg-card ${highlight ? "border-destructive/50" : ""}`}
     >
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
         <Icon
-          className={`w-4 h-4 ${
-            highlight ? "text-destructive" : "text-muted-foreground"
-          }`}
+          className={`w-4 h-4 ${highlight ? "text-destructive" : "text-muted-foreground"}`}
         />
       </div>
       <p className="text-3xl font-bold tracking-tight">{value}</p>
       <p className="text-xs text-muted-foreground mt-1">{description}</p>
     </div>
-  )
+  );
 }
 
 export default async function DashboardPage({ params }: Props) {
-  const { workspaceSlug } = await params
+  const { workspaceSlug } = await params;
 
-  const workspace = await getWorkspaceBySlug(workspaceSlug)
+  const { membership } = await requireWorkspaceMember(workspaceSlug);
 
-  if (!workspace) {
-    notFound()
-  }
-
-  const stats = await getDashboardStats(workspace._id)
+  const stats = await getDashboardStats(membership.workspaceId);
 
   const completionRate =
     stats.totalTasks > 0
       ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
-      : 0
+      : 0;
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {workspace.name} workspace overview
+          {membership.workspaceName} ka overview
         </p>
       </div>
 
@@ -102,12 +93,12 @@ export default async function DashboardPage({ params }: Props) {
 
       {stats.totalProjects === 0 && (
         <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="font-medium">No projects yet</p>
+          <p className="font-medium">There are no projects yet</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Create your first project from the Projects page
+            Create your first project from the Projects page.
           </p>
         </div>
       )}
     </div>
-  )
+  );
 }

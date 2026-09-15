@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import WorkspaceForm from "@/components/layout/workspace-form";
+import WorkspaceForm from "@/components/onboarding/workspace-form";
 
 export default async function OnboardingPage() {
   const session = await auth();
@@ -15,11 +15,11 @@ export default async function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-lg p-8 border rounded-lg">
         <h1 className="text-2xl font-bold mb-2">
-          Welcome, {userName}! Apna workspace banao.
+          Welcome, {userName}! Create your workspace.
         </h1>
 
         <p className="text-muted-foreground mb-6">
-          Apne workspace ka naam choose karein.
+          Choose a name for your workspace.
         </p>
 
         <WorkspaceForm />

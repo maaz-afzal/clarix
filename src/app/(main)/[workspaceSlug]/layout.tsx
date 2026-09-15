@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { requireWorkspaceMember } from "@/lib/authorization";
 import WorkspaceShell from "@/components/layout/workspaceShell";
 
 type Props = {
@@ -9,28 +9,19 @@ type Props = {
 
 export default async function WorkspaceLayout({ children, params }: Props) {
   const { workspaceSlug } = await params;
+  const { user, membership } = await requireWorkspaceMember(workspaceSlug);
 
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  const workspaceName = workspaceSlug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-
-  const user = {
-    name: session.user.name ?? "User",
-    email: session.user.email ?? "",
-    image: session.user.image ?? undefined,
+  const user_data = {
+    name: user.name ?? "User",
+    email: user.email ?? "",
+    image: user.image ?? undefined,
   };
 
   return (
     <WorkspaceShell
       workspaceSlug={workspaceSlug}
-      workspaceName={workspaceName}
-      user={user}
+      workspaceName={membership.workspaceName}
+      user={user_data}
     >
       {children}
     </WorkspaceShell>
