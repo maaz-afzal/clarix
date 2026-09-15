@@ -2,9 +2,7 @@ import { auth } from "@/lib/auth";
 import { getWorkspaceMembership } from "@/lib/dal/workspace";
 import Task from "@/models/Task";
 import { redirect } from "next/navigation";
-import connectDB from "./db";
-import Workspace from "@/models/Workspace";
-import WorkspaceMember from "@/models/WorkspaceMember";
+import connectDB from "@/lib/db";
 
 export type MemberRole = "owner" | "admin" | "member";
 
@@ -118,21 +116,13 @@ export async function verifyTaskAccess(
 
   await connectDB();
 
-  const workspace = await Workspace.findOne({
-    slug: workspaceSlug,
-  });
-
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
-
   const task = await Task.findById(taskId);
 
   if (!task) {
     throw new Error("Task not found");
   }
 
-  if (task.workspaceId.toString() !== workspace._id.toString()) {
+  if (task.workspaceId.toString() !== membership.workspaceId) {
     throw new Error("Task does not belong to this workspace");
   }
 
