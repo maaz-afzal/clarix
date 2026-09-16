@@ -1,66 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/onboarding";
+  const [isPending, startTransition] = useTransition();
+  const [isGooglePending, startGoogleTransition] = useTransition();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  async function handleCredentialsLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-
-    try {
+  function onSubmit(data: LoginInput) {
+    startTransition(async () => {
       const result = await signIn("credentials", {
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
+        email: data.email,
+        password: data.password,
         redirect: false,
       });
 
       if (result?.error) {
-        toast.error("Email ya password galat hai");
+        toast.error("Email or password is incorrect");
         return;
       }
 
       toast.success("Logged in successfully!");
       router.push(callbackUrl);
       router.refresh();
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    });
   }
 
-  async function handleGoogleLogin() {
-    setIsGoogleLoading(true);
-    try {
+  function handleGoogleLogin() {
+    startGoogleTransition(async () => {
       await signIn("google", { redirectTo: callbackUrl });
-    } catch {
-      toast.error("Google login failed");
-      setIsGoogleLoading(false);
-    }
+    });
   }
+
+  const isLoading = isPending || isGooglePending;
 
   return (
     <div className="space-y-4">
-      {/* Google Login */}
+      {/* Google */}
       <button
         type="button"
         onClick={handleGoogleLogin}
-        disabled={isGoogleLoading || isLoading}
+        disabled={isLoading}
         className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isGoogleLoading ? (
+        {isGooglePending ? (
           <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
         ) : (
           <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -85,7 +84,6 @@ export default function LoginForm() {
         Continue with Google
       </button>
 
-      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -96,20 +94,23 @@ export default function LoginForm() {
       </div>
 
       {/* Credentials Form */}
-      <form onSubmit={handleCredentialsLogin} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-sm font-medium">
             Email
           </label>
           <input
             id="email"
-            name="email"
             type="email"
-            required
             autoComplete="email"
             placeholder="user@example.com"
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            disabled={isLoading}
+            {...register("email")}
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           />
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -118,27 +119,32 @@ export default function LoginForm() {
           </label>
           <input
             id="password"
-            name="password"
             type="password"
-            required
             autoComplete="current-password"
             placeholder="••••••••"
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            disabled={isLoading}
+            {...register("password")}
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           />
+          {errors.password && (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
-          disabled={isLoading || isGoogleLoading}
-          className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          disabled={isLoading}
+          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {isLoading ? (
+          {isPending ? (
             <>
               <span className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              Logging in...
+              Signing in...
             </>
           ) : (
-            "Login"
+            "Sign in"
           )}
         </button>
       </form>

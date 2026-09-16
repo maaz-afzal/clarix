@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
-import { registerSchema } from "@/lib/validations/auth";
+import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 
 interface RegisterResult {
   success: boolean;
@@ -11,15 +11,9 @@ interface RegisterResult {
 }
 
 export async function registerUser(
-  formData: FormData,
+  input: RegisterInput,
 ): Promise<RegisterResult> {
-  const data = {
-    name: formData.get("name") as string,
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
-
-  const result = registerSchema.safeParse(data);
+  const result = registerSchema.safeParse(input);
 
   if (!result.success) {
     return {
@@ -33,9 +27,7 @@ export async function registerUser(
   try {
     await connectDB();
 
-    const existingUser = await User.findOne({
-      email: email.toLowerCase().trim(),
-    });
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return { success: false, error: "This email is already registered" };
@@ -45,7 +37,7 @@ export async function registerUser(
 
     await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email,
       password: hashedPassword,
     });
 

@@ -1,34 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { registerUser } from "@/actions/auth";
 
 export default function RegisterForm() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [isGooglePending, startGoogleTransition] = useTransition();
 
-  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+  });
 
-    const formData = new FormData(e.currentTarget);
-
-    try {
-      const result = await registerUser(formData);
+  function onSubmit(data: RegisterInput) {
+    startTransition(async () => {
+      const result = await registerUser(data);
 
       if (!result.success) {
         toast.error(result.error || "Registration failed");
         return;
       }
 
-      // Registration kamyab - auto login
       const loginResult = await signIn("credentials", {
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
+        email: data.email,
+        password: data.password,
         redirect: false,
       });
 
@@ -38,35 +43,29 @@ export default function RegisterForm() {
         return;
       }
 
-      toast.success("Account created! Welcome to Clarix!");
+      toast.success("Welcome to Clarix!");
       router.push("/onboarding");
       router.refresh();
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    });
   }
 
-  async function handleGoogleLogin() {
-    setIsGoogleLoading(true);
-    try {
+  function handleGoogleLogin() {
+    startGoogleTransition(async () => {
       await signIn("google", { redirectTo: "/onboarding" });
-    } catch {
-      toast.error("Google login failed");
-      setIsGoogleLoading(false);
-    }
+    });
   }
+
+  const isLoading = isPending || isGooglePending;
 
   return (
     <div className="space-y-4">
       <button
         type="button"
         onClick={handleGoogleLogin}
-        disabled={isGoogleLoading || isLoading}
+        disabled={isLoading}
         className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isGoogleLoading ? (
+        {isGooglePending ? (
           <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
         ) : (
           <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -88,7 +87,7 @@ export default function RegisterForm() {
             />
           </svg>
         )}
-        Register with Google
+        Continue with Google
       </button>
 
       <div className="relative">
@@ -100,20 +99,23 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      <form onSubmit={handleRegister} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="name" className="text-sm font-medium">
-            Name
+            Full name
           </label>
           <input
             id="name"
-            name="name"
             type="text"
-            required
             autoComplete="name"
-            placeholder="Your Name"
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            placeholder="Your name"
+            disabled={isLoading}
+            {...register("name")}
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           />
+          {errors.name && (
+            <p className="text-xs text-destructive">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -122,13 +124,16 @@ export default function RegisterForm() {
           </label>
           <input
             id="email"
-            name="email"
             type="email"
-            required
             autoComplete="email"
-            placeholder="user@example.com"
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            placeholder="you@example.com"
+            disabled={isLoading}
+            {...register("email")}
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           />
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -137,21 +142,26 @@ export default function RegisterForm() {
           </label>
           <input
             id="password"
-            name="password"
             type="password"
-            required
             autoComplete="new-password"
-            placeholder="At least 8 characters"
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            placeholder="Min. 8 characters"
+            disabled={isLoading}
+            {...register("password")}
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-colors"
           />
+          {errors.password && (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
-          disabled={isLoading || isGoogleLoading}
-          className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          disabled={isLoading}
+          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {isLoading ? (
+          {isPending ? (
             <>
               <span className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
               Creating account...

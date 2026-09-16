@@ -1,30 +1,42 @@
+import type { Metadata } from "next"
 import RegisterForm from "@/components/auth/register-form"
 import Link from "next/link"
 
+export const metadata: Metadata = {
+  title: "Create Account",
+  description: "Create your free Clarix account",
+}
+
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Clarix</h1>
-          <p className="text-muted-foreground">
-            Create your account
-          </p>
-        </div>
+    <div className="w-full max-w-md space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
+        <p className="text-muted-foreground text-sm">
+          Start managing your projects with AI assistance
+        </p>
+      </div>
 
-        <div className="border rounded-xl p-6 bg-card shadow-sm space-y-4">
-          <RegisterForm />
-        </div>
+      <div className="bg-card border rounded-xl p-6 shadow-sm">
+        <RegisterForm />
+      </div>
 
-        <p className="text-center text-sm text-muted-foreground">
+      <div className="text-center space-y-2">
+        <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
             href="/login"
             className="text-primary font-medium hover:underline"
           >
-            Login
+            Sign in
           </Link>
         </p>
+        <Link
+          href="/"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors block"
+        >
+          Back to home
+        </Link>
       </div>
     </div>
   )
