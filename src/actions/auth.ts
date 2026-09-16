@@ -1,20 +1,14 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { z } from "zod";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { registerSchema } from "@/lib/validations/auth";
 
 interface RegisterResult {
   success: boolean;
   error?: string;
 }
-
-const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Valid email is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
 
 export async function registerUser(
   formData: FormData,

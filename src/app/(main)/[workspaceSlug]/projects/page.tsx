@@ -1,8 +1,9 @@
 import { requireWorkspaceMember } from "@/lib/authorization";
 import { getProjectsByWorkspace } from "@/lib/dal/project";
 import ProjectCard from "@/components/projects/project-card";
-import { notFound } from "next/navigation";
-import { Plus } from "lucide-react";
+import CreateProjectDialog from "@/components/projects/create-project-dialog";
+import { hasPermission } from "@/lib/authorization";
+import type { MemberRole } from "@/lib/authorization";
 
 type Props = {
   params: Promise<{ workspaceSlug: string }>;
@@ -10,10 +11,13 @@ type Props = {
 
 export default async function ProjectsPage({ params }: Props) {
   const { workspaceSlug } = await params;
-
   const { membership } = await requireWorkspaceMember(workspaceSlug);
-
   const projects = await getProjectsByWorkspace(membership.workspaceId);
+
+  const canCreateProject = hasPermission(
+    membership.role as MemberRole,
+    "project_create",
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -25,11 +29,8 @@ export default async function ProjectsPage({ params }: Props) {
           </p>
         </div>
 
-        {["owner", "admin"].includes(membership.role) && (
-          <button className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Plus className="w-4 h-4" />
-            New Project
-          </button>
+        {canCreateProject && (
+          <CreateProjectDialog workspaceSlug={workspaceSlug} />
         )}
       </div>
 
@@ -37,9 +38,9 @@ export default async function ProjectsPage({ params }: Props) {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-lg font-medium">No projects found</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {["owner", "admin"].includes(membership.role)
+            {canCreateProject
               ? "Create your first project"
-              : "There are no projects in this workspace yet"}
+              : "There are no projects yet"}
           </p>
         </div>
       ) : (
