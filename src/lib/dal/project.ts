@@ -88,3 +88,29 @@ export async function getProjectById(projectId: string) {
     throw new Error("Project load nahi ho saka");
   }
 }
+
+export async function getProjectsForNav(
+  workspaceId: string
+): Promise<{ _id: string; name: string; color: string }[]> {
+  try {
+    await connectDB()
+
+    const projects = await Project.find({
+      workspaceId,
+      status: "active",
+    })
+      .select("name color")
+      .sort({ name: 1 })
+      .limit(8)
+      .lean()
+
+    return projects.map((p) => ({
+      _id: p._id.toString(),
+      name: p.name,
+      color: p.color,
+    }))
+  } catch (error) {
+    console.error("Failed to fetch nav projects:", error)
+    return []
+  }
+}

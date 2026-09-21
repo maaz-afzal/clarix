@@ -8,12 +8,12 @@ import {
   Bell,
   Search,
   Settings,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LogoutButton from "../auth/logout-button";
+import WorkspaceSwitcher from "@/components/layout/workspace-switcher";
 
 interface SidebarProps {
   workspaceSlug: string;
@@ -25,6 +25,17 @@ interface SidebarProps {
     email: string;
     image?: string;
   };
+  workspaces: {
+    _id: string;
+    name: string;
+    slug: string;
+    role: string;
+  }[];
+  navProjects: {
+    _id: string;
+    name: string;
+    color: string;
+  }[];
 }
 
 interface NavItem {
@@ -39,6 +50,8 @@ export default function Sidebar({
   isCollapsed,
   onToggle,
   user,
+  workspaces,
+  navProjects,
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -73,41 +86,30 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-card transition-all duration-200",
+        "fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-card transition-[width] duration-200",
         isCollapsed ? "w-16" : "w-60",
       )}
     >
-      <div className="border-b p-4">
-        <button
-          type="button"
-          className={cn(
-            "flex items-center rounded-md transition-colors hover:bg-accent",
-            isCollapsed
-              ? "w-full justify-center p-1"
-              : "w-full justify-between gap-2 px-2 py-1.5",
-          )}
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">
-                {workspaceName[0]?.toUpperCase()}
-              </span>
-            </div>
-
-            {!isCollapsed && (
-              <span className="truncate text-sm font-semibold">
-                {workspaceName}
-              </span>
-            )}
-          </div>
-
-          {!isCollapsed && (
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-          )}
-        </button>
+      <div
+        className={cn(
+          "border-b transition-[padding] duration-200",
+          isCollapsed ? "p-2" : "p-4",
+        )}
+      >
+        <WorkspaceSwitcher
+          currentSlug={workspaceSlug}
+          workspaceName={workspaceName}
+          workspaces={workspaces}
+          isCollapsed={isCollapsed}
+        />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav
+        className={cn(
+          "flex-1 overflow-y-auto transition-[padding] duration-200",
+          isCollapsed ? "space-y-1 p-2" : "space-y-1 p-3",
+        )}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
 
@@ -123,7 +125,7 @@ export default function Sidebar({
               title={isCollapsed ? item.label : undefined}
               className={cn(
                 "flex items-center rounded-md text-sm transition-colors",
-                isCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+                isCollapsed ? "h-10 justify-center px-0" : "gap-3 px-3 py-2",
                 isActive
                   ? "bg-accent font-medium text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -135,17 +137,63 @@ export default function Sidebar({
             </Link>
           );
         })}
+
+        {navProjects.length > 0 && (
+          <div className="mt-4">
+            {!isCollapsed && (
+              <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Projects
+              </p>
+            )}
+
+            <div className="space-y-0.5">
+              {navProjects.map((project) => {
+                const isActive = pathname.includes(project._id);
+
+                return (
+                  <Link
+                    key={project._id}
+                    href={`/${workspaceSlug}/projects/${project._id}`}
+                    title={isCollapsed ? project.name : undefined}
+                    className={cn(
+                      "flex items-center rounded-md text-sm transition-colors",
+                      isCollapsed
+                        ? "h-10 justify-center px-0"
+                        : "gap-3 px-3 py-1.5",
+                      isActive
+                        ? "bg-accent font-medium text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    )}
+                  >
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: project.color }}
+                    />
+
+                    {!isCollapsed && (
+                      <span className="truncate">{project.name}</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </nav>
 
-      <div className="border-t p-3">
+      <div
+        className={cn(
+          "border-t transition-[padding] duration-200",
+          isCollapsed ? "p-2" : "p-3",
+        )}
+      >
         <div
           className={cn(
-            "flex cursor-pointer items-center rounded-md transition-colors hover:bg-accent",
-            isCollapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+            "flex items-center rounded-md transition-colors hover:bg-accent",
+            isCollapsed ? "h-10 justify-center px-0" : "gap-3 px-3 py-2",
           )}
         >
-          {/* Avatar */}
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 overflow-hidden">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
             {user.image ? (
               <img
                 src={user.image}
@@ -162,9 +210,11 @@ export default function Sidebar({
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{user.name}</p>
+
               <p className="truncate text-xs text-muted-foreground">
                 {user.email}
               </p>
+
               <LogoutButton />
             </div>
           )}
@@ -175,7 +225,7 @@ export default function Sidebar({
         type="button"
         onClick={onToggle}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute right-0 top-1/2 z-50 flex h-10 w-4 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="absolute right-0 top-1/2 z-50 flex h-10 w-5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />

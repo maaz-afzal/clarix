@@ -59,7 +59,7 @@ export default async function DashboardPage({ params }: Props) {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {membership.workspaceName} ka overview
+          {membership.workspaceName} overview
         </p>
       </div>
 
