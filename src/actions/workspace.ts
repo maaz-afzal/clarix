@@ -10,6 +10,7 @@ import { generateSlug } from "@/lib/utils";
 import {
   CreateWorkspaceInput,
   createWorkspaceSchema,
+  UpdateWorkspaceInput,
   updateWorkspaceSchema,
 } from "@/lib/validations/workspace";
 
@@ -76,12 +77,11 @@ export async function createWorkspace(
 
 export async function updateWorkspace(
   workspaceSlug: string,
-  formData: FormData,
+  input: UpdateWorkspaceInput,
 ): Promise<UpdateWorkspaceResult> {
   await verifyPermission(workspaceSlug, "workspace_update");
 
-  const name = formData.get("name") as string | null;
-  const description = formData.get("description") as string | null;
+  const { name, description } = input;
 
   const result = updateWorkspaceSchema.safeParse({
     name: name !== null ? name : undefined,
