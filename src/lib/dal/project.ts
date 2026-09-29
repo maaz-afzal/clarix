@@ -15,15 +15,13 @@ export interface ProjectWithStats {
 
 export async function getProjectsByWorkspace(
   workspaceId: string,
+  status?: "active" | "archived",
 ): Promise<ProjectWithStats[]> {
   await connectDB();
 
-  const projects = await Project.find({
-    workspaceId,
-    status: "active",
-  })
-    .sort({ createdAt: -1 })
-    .lean();
+  const query = status ? { workspaceId, status } : { workspaceId };
+
+  const projects = await Project.find(query).sort({ createdAt: -1 }).lean();
 
   if (projects.length === 0) return [];
 
@@ -85,15 +83,15 @@ export async function getProjectById(projectId: string) {
     };
   } catch (error) {
     console.error("Failed to fetch project:", error);
-    throw new Error("Project load nahi ho saka");
+    throw new Error("Failed to fetch project");
   }
 }
 
 export async function getProjectsForNav(
-  workspaceId: string
+  workspaceId: string,
 ): Promise<{ _id: string; name: string; color: string }[]> {
   try {
-    await connectDB()
+    await connectDB();
 
     const projects = await Project.find({
       workspaceId,
@@ -102,15 +100,15 @@ export async function getProjectsForNav(
       .select("name color")
       .sort({ name: 1 })
       .limit(8)
-      .lean()
+      .lean();
 
     return projects.map((p) => ({
       _id: p._id.toString(),
       name: p.name,
       color: p.color,
-    }))
+    }));
   } catch (error) {
-    console.error("Failed to fetch nav projects:", error)
-    return []
+    console.error("Failed to fetch nav projects:", error);
+    return [];
   }
 }

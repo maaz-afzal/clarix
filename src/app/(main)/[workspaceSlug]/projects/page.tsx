@@ -1,22 +1,37 @@
-import { requireWorkspaceMember } from "@/lib/authorization";
+import { requireWorkspaceMember, hasPermission } from "@/lib/authorization";
 import { getProjectsByWorkspace } from "@/lib/dal/project";
 import ProjectCard from "@/components/projects/project-card";
 import CreateProjectDialog from "@/components/projects/create-project-dialog";
-import { hasPermission } from "@/lib/authorization";
 import type { MemberRole } from "@/lib/authorization";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Projects" };
 
 type Props = {
   params: Promise<{ workspaceSlug: string }>;
+  searchParams: Promise<{ archived?: string }>;
 };
 
-export default async function ProjectsPage({ params }: Props) {
+export default async function ProjectsPage({ params, searchParams }: Props) {
   const { workspaceSlug } = await params;
-  const { membership } = await requireWorkspaceMember(workspaceSlug);
-  const projects = await getProjectsByWorkspace(membership.workspaceId);
+  const { archived } = await searchParams;
 
-  const canCreateProject = hasPermission(
+  const { membership } = await requireWorkspaceMember(workspaceSlug);
+
+  const canManage = hasPermission(
+    membership.role as MemberRole,
+    "project_update",
+  );
+  const canCreate = hasPermission(
     membership.role as MemberRole,
     "project_create",
+  );
+
+  const showArchived = archived === "true";
+
+  const projects = await getProjectsByWorkspace(
+    membership.workspaceId,
+    showArchived ? "archived" : "active",
   );
 
   return (
@@ -25,22 +40,38 @@ export default async function ProjectsPage({ params }: Props) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {projects.length} project{projects.length !== 1 ? "s" : ""}
+            {projects.length} {showArchived ? "archived" : "active"} project
+            {projects.length !== 1 ? "s" : ""}
           </p>
         </div>
 
-        {canCreateProject && (
-          <CreateProjectDialog workspaceSlug={workspaceSlug} />
-        )}
+        <div className="flex items-center gap-3">
+          {/* Archive toggle */}
+          <a
+            href={`/${workspaceSlug}/projects${showArchived ? "" : "?archived=true"}`}
+            className="text-sm text-muted-foreground hover:text-foreground
+            transition-colors"
+          >
+            {showArchived ? "Active projects" : "Archived"}
+          </a>
+
+          {canCreate && !showArchived && (
+            <CreateProjectDialog workspaceSlug={workspaceSlug} />
+          )}
+        </div>
       </div>
 
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-lg font-medium">No projects found</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed rounded-lg">
+          <p className="text-lg font-medium">
+            {showArchived ? "No archived projects" : "No projects"}
+          </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {canCreateProject
-              ? "Create your first project"
-              : "There are no projects yet"}
+            {showArchived
+              ? "Archived projects will appear here"
+              : canCreate
+                ? "Create a new project"
+                : "There are no active projects at the moment"}
           </p>
         </div>
       ) : (
@@ -50,6 +81,7 @@ export default async function ProjectsPage({ params }: Props) {
               key={project._id}
               project={project}
               workspaceSlug={workspaceSlug}
+              canManage={canManage}
             />
           ))}
         </div>
