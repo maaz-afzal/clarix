@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import {
   MoreHorizontal,
@@ -23,6 +24,7 @@ const PRIORITY_CONFIG = {
 interface TaskCardProps {
   task: TaskItem;
   workspaceSlug: string;
+  projectId: string;
   onEdit?: (task: TaskItem) => void;
   isDragging?: boolean;
 }
@@ -30,6 +32,7 @@ interface TaskCardProps {
 export default function TaskCard({
   task,
   workspaceSlug,
+  projectId,
   onEdit,
   isDragging = false,
 }: TaskCardProps) {
@@ -64,7 +67,13 @@ export default function TaskCard({
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium line-clamp-2 flex-1">{task.title}</p>
+        <Link
+          href={`/${workspaceSlug}/projects/${projectId}/tasks/${task._id}`}
+          className="text-sm font-medium line-clamp-2 flex-1 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {task.title}
+        </Link>
 
         <div className="relative shrink-0">
           <button

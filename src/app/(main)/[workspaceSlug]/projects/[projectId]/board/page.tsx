@@ -2,6 +2,9 @@ import { getTasksByProject } from "@/lib/dal/task";
 import { getWorkspaceBySlug } from "@/lib/dal/workspace";
 import { getWorkspaceMembers } from "@/lib/dal/members";
 import TaskCard from "@/components/tasks/task-card";
+import { getProjectById } from "@/lib/dal/project";
+import { requireWorkspaceMember } from "@/lib/authorization";
+import notFound from "@/app/not-found";
 
 type Props = {
   params: Promise<{
@@ -15,12 +18,19 @@ export default async function BoardPage({ params }: Props) {
 
   const workspace = await getWorkspaceBySlug(workspaceSlug);
 
-  if (!workspace) {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold">Workspace not found</h1>
-      </div>
-    );
+ if (!workspace) {
+   return (
+     <div className="p-6">
+       <h1>Workspace not found</h1>
+     </div>
+   );
+ }
+
+  const { membership } = await requireWorkspaceMember(workspaceSlug);
+  
+  const project = await getProjectById(projectId);
+  if (!project || project.workspaceId !== membership.workspaceId) {
+    notFound();
   }
 
   const [tasks, members] = await Promise.all([
@@ -82,6 +92,7 @@ export default async function BoardPage({ params }: Props) {
             <div className="flex flex-1 flex-col gap-3">
               {column.tasks.map((task) => (
                 <TaskCard
+                  projectId={projectId}
                   key={task._id}
                   task={task}
                   workspaceSlug={workspaceSlug}

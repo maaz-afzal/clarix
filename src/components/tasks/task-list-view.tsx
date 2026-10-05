@@ -157,7 +157,7 @@ export default function TaskListView({
       {showCreateForm && (
         <div className="border-b px-6 py-4 bg-muted/30">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">Naya Task</h3>
+            <h3 className="text-sm font-medium">New Task</h3>
             <button onClick={() => setShowCreateForm(false)}>
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
@@ -227,7 +227,7 @@ export default function TaskListView({
                   <tr
                     key={task._id}
                     className={cn(
-                      "hover:bg-muted/30 transition-colors",
+                      "group hover:bg-muted/30 transition-colors",
                       isPending && "opacity-50",
                     )}
                   >
@@ -312,15 +312,17 @@ export default function TaskListView({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDelete(task._id)}
-                        disabled={isPending}
-                        className="opacity-0 group-hover:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
-                    </td>
+                    {canManage && (
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleDelete(task._id)}
+                          disabled={isPending}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
