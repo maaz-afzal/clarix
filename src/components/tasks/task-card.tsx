@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Trash2,
   Pencil,
+  GripVertical,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
@@ -27,6 +28,7 @@ interface TaskCardProps {
   projectId: string;
   onEdit?: (task: TaskItem) => void;
   isDragging?: boolean;
+  dragListeners?: Record<string, unknown>;
 }
 
 export default function TaskCard({
@@ -35,6 +37,7 @@ export default function TaskCard({
   projectId,
   onEdit,
   isDragging = false,
+  dragListeners,
 }: TaskCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -61,12 +64,19 @@ export default function TaskCard({
     <div
       className={cn(
         "bg-card border rounded-lg p-3 space-y-2 cursor-grab active:cursor-grabbing group",
-        isDragging && "shadow-lg rotate-1 opacity-90",
+        isDragging && "shadow-lg rotate-2 opacity-90",
         isPending && "opacity-50",
       )}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start gap-2">
+        <div
+          className="mt-0.5 cursor-grab active:cursor-grabbing shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+          {...(dragListeners ?? {})}
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </div>
+
         <Link
           href={`/${workspaceSlug}/projects/${projectId}/tasks/${task._id}`}
           className="text-sm font-medium line-clamp-2 flex-1 hover:underline"
