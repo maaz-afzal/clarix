@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/db";
 import Task from "@/models/Task";
 import Activity from "@/models/Activity";
-import { verifyPermission, verifyTaskAccess } from "@/lib/authorization";
+import { verifyPermission, verifyTaskAccess, verifyWorkspaceMember } from "@/lib/authorization";
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -193,25 +193,25 @@ export async function deleteTask(
 
 export async function updateTaskPositions(
   workspaceSlug: string,
-  updates: { taskId: string; position: number; status: string }[],
+  updates: { taskId: string; position: number; status: string }[]
 ): Promise<TaskActionResult> {
-  await verifyPermission(workspaceSlug, "task_update_own");
+  await verifyWorkspaceMember(workspaceSlug)
 
   try {
-    await connectDB();
+    await connectDB()
 
     const bulkOps = updates.map(({ taskId, position, status }) => ({
       updateOne: {
         filter: { _id: new mongoose.Types.ObjectId(taskId) },
         update: { $set: { position, status } },
       },
-    }));
+    }))
 
-    await Task.bulkWrite(bulkOps);
+    await Task.bulkWrite(bulkOps)
 
-    return { success: true };
+    return { success: true }
   } catch (error) {
-    console.error("Position update error:", error);
-    return { success: false, error: "Positions cannot be updated" };
+    console.error("Position update error:", error)
+    return { success: false, error: "Positions update nahi ho sake" }
   }
 }

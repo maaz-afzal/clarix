@@ -10,6 +10,7 @@ import {
   Pencil,
   GripVertical,
 } from "lucide-react";
+import type { DraggableAttributes } from "@dnd-kit/core";
 import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { deleteTask } from "@/actions/task";
@@ -29,6 +30,7 @@ interface TaskCardProps {
   onEdit?: (task: TaskItem) => void;
   isDragging?: boolean;
   dragListeners?: Record<string, unknown>;
+  dragAttributes?: DraggableAttributes;
 }
 
 export default function TaskCard({
@@ -37,6 +39,7 @@ export default function TaskCard({
   projectId,
   onEdit,
   isDragging = false,
+  dragAttributes,
   dragListeners,
 }: TaskCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,7 +74,11 @@ export default function TaskCard({
       {/* Header */}
       <div className="flex items-start gap-2">
         <div
-          className="mt-0.5 cursor-grab active:cursor-grabbing shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+          role="button"
+          tabIndex={0}
+          aria-label={`Move task: ${task.title}`}
+          className="mt-0.5 cursor-grab active:cursor-grabbing shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+          {...dragAttributes}
           {...(dragListeners ?? {})}
         >
           <GripVertical className="w-3.5 h-3.5" />

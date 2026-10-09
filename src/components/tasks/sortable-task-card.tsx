@@ -28,16 +28,13 @@ export default function SortableTaskCard({ task, workspaceSlug, projectId }: Sor
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-    >
+    <div ref={setNodeRef} style={style}>
       <TaskCard
         task={task}
         workspaceSlug={workspaceSlug}
         projectId={projectId}
         isDragging={isDragging}
+        dragAttributes={attributes}
         dragListeners={listeners}
       />
     </div>
