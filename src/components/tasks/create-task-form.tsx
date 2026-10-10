@@ -1,11 +1,14 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, watch, setValue } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { createTaskSchema, type CreateTaskInput } from "@/lib/validations/task";
 import { createTask } from "@/actions/task";
+import { generateTaskDescription } from "@/actions/ai";
+import AIDescriptionButton from "../ai/ai-description-button";
 
 interface Member {
   userId: string;
@@ -15,7 +18,8 @@ interface Member {
 interface CreateTaskFormProps {
   workspaceSlug: string;
   projectId: string;
-  members: Member[];
+  projectName?: string;
+  members: { userId: string; user: { name: string; image?: string } }[];
   defaultStatus?: string;
   onSuccess?: () => void;
 }
@@ -37,6 +41,7 @@ const PRIORITY_OPTIONS = [
 export default function CreateTaskForm({
   workspaceSlug,
   projectId,
+  projectName,
   members,
   defaultStatus = "todo",
   onSuccess,
@@ -46,6 +51,8 @@ export default function CreateTaskForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
     reset,
   } = useForm<CreateTaskInput>({
@@ -91,10 +98,18 @@ export default function CreateTaskForm({
 
       {/* Description */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Description</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Description</label>
+          <AIDescriptionButton
+            workspaceSlug={workspaceSlug}
+            projectName={projectName}
+            getTitle={() => watch("title")}
+            onGenerated={(text) => setValue("description", text)}
+          />
+        </div>
         <textarea
           {...register("description")}
-          placeholder="Task details..."
+          placeholder="Task Description"
           rows={3}
           disabled={isPending}
           className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 resize-none"
