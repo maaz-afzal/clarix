@@ -58,7 +58,6 @@ export async function createTask(
   try {
     await connectDB();
 
-    // Position - existing tasks mein sabse aakhir mein
     const lastTask = await Task.findOne({
       projectId: new mongoose.Types.ObjectId(projectId),
       status: result.data.status,

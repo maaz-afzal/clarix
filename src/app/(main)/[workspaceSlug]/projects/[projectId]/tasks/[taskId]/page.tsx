@@ -9,6 +9,7 @@ import CommentSection from "@/components/tasks/comment-section";
 import ActivityLog from "@/components/tasks/activity-log";
 import TaskEditSidebar from "@/components/tasks/task-edit-sidebar";
 import TaskTitleEditor from "@/components/tasks/task-title-editor"; 
+import AIBreakdownButton from "@/components/ai/ai-breakdown-button";
 import type { Metadata } from "next";
 
 type Props = {
@@ -93,6 +94,16 @@ export default async function TaskDetailPage({ params }: Props) {
             members={members}
             workspaceSlug={workspaceSlug}
           />
+          <div className="mt-6 border-t pt-4">
+            <h3 className="mb-3 text-sm font-semibold">AI Assistant</h3>
+
+            <AIBreakdownButton
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              title={task.title}
+              description={task.description ?? undefined}
+            />
+          </div>
         </div>
       </div>
     </div>
