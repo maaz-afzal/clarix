@@ -9,6 +9,7 @@ import { updateTask, deleteTask } from "@/actions/task";
 import type { TaskItem } from "@/lib/dal/task";
 import type { MemberWithUser } from "@/lib/dal/members";
 import CreateTaskForm from "./create-task-form";
+import Link from "next/link";
 
 const STATUS_OPTIONS = ["todo", "in-progress", "in-review", "done"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "urgent"];
@@ -232,7 +233,12 @@ export default function TaskListView({
                     )}
                   >
                     <td className="px-6 py-3">
-                      <p className="font-medium line-clamp-1">{task.title}</p>
+                      <Link
+                        href={`/${workspaceSlug}/projects/${projectId}/tasks/${task._id}`}
+                        className="font-medium line-clamp-1 hover:underline hover:text-primary transition-colors"
+                      >
+                        {task.title}
+                      </Link>
                       {task.description && (
                         <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                           {task.description}
