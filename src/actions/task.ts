@@ -12,6 +12,7 @@ import {
   type UpdateTaskInput,
 } from "@/lib/validations/task";
 import mongoose from "mongoose";
+import { createNotification } from "@/lib/notifications";
 
 interface TaskActionResult {
   success: boolean;
@@ -138,6 +139,20 @@ export async function updateTask(
     }
 
     await Task.findByIdAndUpdate(taskId, { $set: updateData });
+
+    if (
+      result.data.assigneeId !== undefined &&
+      result.data.assigneeId &&
+      task.assigneeId?.toString() !== result.data.assigneeId
+    ) {
+      await createNotification({
+        userId: result.data.assigneeId,
+        workspaceId: task.workspaceId.toString(),
+        type: "assignment",
+        message: `You have been assigned a task: "${task.title}"`,
+        link: `/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${taskId}`,
+      });
+    }
 
     if (result.data.status && result.data.status !== task.status) {
       await logActivity(
