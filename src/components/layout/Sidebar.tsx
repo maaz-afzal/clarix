@@ -36,6 +36,7 @@ interface SidebarProps {
     name: string;
     color: string;
   }[];
+  unreadCount: number;
 }
 
 interface NavItem {
@@ -52,6 +53,7 @@ export default function Sidebar({
   user,
   workspaces,
   navProjects,
+  unreadCount,
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -117,6 +119,7 @@ export default function Sidebar({
             pathname === item.href ||
             (item.href !== `/${workspaceSlug}/dashboard` &&
               pathname.startsWith(item.href));
+          const showBadge = item.label === "Notifications" && unreadCount > 0;
 
           return (
             <Link
@@ -134,6 +137,11 @@ export default function Sidebar({
               <Icon className="h-4 w-4 shrink-0" />
 
               {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && showBadge && (
+                <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 min-w-5 text-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -26,6 +26,7 @@ type Props = {
     name: string;
     color: string;
   }[];
+  unreadCount: number;
 };
 
 export default function WorkspaceShell({
@@ -35,6 +36,7 @@ export default function WorkspaceShell({
   user,
   workspaces,
   navProjects,
+  unreadCount,
 }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -48,6 +50,7 @@ export default function WorkspaceShell({
         user={user}
         workspaces={workspaces}
         navProjects={navProjects}
+        unreadCount={unreadCount}
       />
 
       <div

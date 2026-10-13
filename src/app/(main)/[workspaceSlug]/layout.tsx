@@ -3,6 +3,7 @@ import { requireWorkspaceMember } from "@/lib/authorization";
 import { getWorkspacesByUser } from "@/lib/dal/workspace";
 import WorkspaceShell from "@/components/layout/workspaceShell";
 import { getProjectsForNav } from "@/lib/dal/project";
+import { getUnreadCount } from "@/lib/dal/notifications";
 
 type Props = {
   children: React.ReactNode;
@@ -14,9 +15,10 @@ export default async function WorkspaceLayout({ children, params }: Props) {
 
   const { user, membership } = await requireWorkspaceMember(workspaceSlug);
 
-  const [workspaces, navProjects] = await Promise.all([
+  const [workspaces, navProjects, unreadCount] = await Promise.all([
     getWorkspacesByUser(user.id),
     getProjectsForNav(membership.workspaceId),
+    getUnreadCount(user.id, membership.workspaceId),
   ]);
 
   const userData = {
@@ -32,6 +34,7 @@ export default async function WorkspaceLayout({ children, params }: Props) {
       user={userData}
       workspaces={workspaces}
       navProjects={navProjects}
+      unreadCount={unreadCount}
     >
       {children}
     </WorkspaceShell>
