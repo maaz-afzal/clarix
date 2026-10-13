@@ -1,4 +1,6 @@
 import { requireWorkspaceMember } from "@/lib/authorization";
+import AIBreakdownPanel from "@/components/ai/ai-breakdown-panel";
+import { getProjectById } from "@/lib/dal/project";
 import { getTaskById } from "@/lib/dal/task";
 import { getTaskComments, getTaskActivity } from "@/lib/dal/comments";
 import { getWorkspaceMembers } from "@/lib/dal/members";
@@ -8,8 +10,7 @@ import { ArrowLeft } from "lucide-react";
 import CommentSection from "@/components/tasks/comment-section";
 import ActivityLog from "@/components/tasks/activity-log";
 import TaskEditSidebar from "@/components/tasks/task-edit-sidebar";
-import TaskTitleEditor from "@/components/tasks/task-title-editor"; 
-import AIBreakdownButton from "@/components/ai/ai-breakdown-button";
+import TaskTitleEditor from "@/components/tasks/task-title-editor";
 import type { Metadata } from "next";
 
 type Props = {
@@ -37,10 +38,11 @@ export default async function TaskDetailPage({ params }: Props) {
     notFound();
   }
 
-  const [comments, activities, members] = await Promise.all([
+  const [comments, activities, members, project] = await Promise.all([
     getTaskComments(taskId),
     getTaskActivity(taskId),
     getWorkspaceMembers(membership.workspaceId),
+    getProjectById(task.projectId),
   ]);
 
   return (
@@ -94,14 +96,12 @@ export default async function TaskDetailPage({ params }: Props) {
             members={members}
             workspaceSlug={workspaceSlug}
           />
-          <div className="mt-6 border-t pt-4">
-            <h3 className="mb-3 text-sm font-semibold">AI Assistant</h3>
 
-            <AIBreakdownButton
+          <div className="border-t pt-4 mt-4">
+            <AIBreakdownPanel
+              task={task}
               workspaceSlug={workspaceSlug}
-              projectId={projectId}
-              title={task.title}
-              description={task.description ?? undefined}
+              projectName={project?.name}
             />
           </div>
         </div>
