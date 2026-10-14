@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { verifyWorkspaceMember } from "@/lib/authorization";
 import { createCommentSchema } from "@/lib/validations/task";
 import mongoose from "mongoose";
+import { createNotification } from "@/lib/notifications";
 
 interface CommentResult {
   success: boolean;
@@ -32,11 +33,24 @@ export async function addComment(
     const task = await Task.findById(taskId).lean();
     if (!task) return { success: false, error: "Task not found" };
 
+    const session = await auth();
+    const commenterName = session?.user?.name ?? "A user";
+
     await Comment.create({
       taskId: new mongoose.Types.ObjectId(taskId),
       userId: new mongoose.Types.ObjectId(userId),
       content: result.data.content,
     });
+
+    if (task.assigneeId && task.assigneeId.toString() !== userId) {
+      await createNotification({
+        userId: task.assigneeId.toString(),
+        workspaceId: task.workspaceId.toString(),
+        type: "comment",
+        message: `${commenterName} commented on your task: "${task.title}"`,
+        link: `/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${taskId}`,
+      });
+    }
 
     revalidatePath(
       `/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${taskId}`,
