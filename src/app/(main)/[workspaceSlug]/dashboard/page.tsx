@@ -5,11 +5,13 @@ import {
   getProjectsProgress,
   getOverdueTasks,
   getRecentActivity,
+  getMyTasks,
 } from "@/lib/dal/dashboard";
 import StatsCards from "@/components/dashboard/stats-cards";
 import ProjectProgressList from "@/components/dashboard/project-progress";
 import OverdueTasks from "@/components/dashboard/overdue-tasks";
 import ActivityFeed from "@/components/dashboard/activity-feed";
+import MyTasks from "@/components/dashboard/my-tasks";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -48,6 +50,19 @@ async function DashboardActivity({ workspaceId }: { workspaceId: string }) {
   return <ActivityFeed activities={activities} />;
 }
 
+async function DashboardMyTasks({
+  workspaceId,
+  userId,
+  workspaceSlug,
+}: {
+  workspaceId: string;
+  userId: string;
+  workspaceSlug: string;
+}) {
+  const tasks = await getMyTasks(workspaceId, userId);
+  return <MyTasks tasks={tasks} workspaceSlug={workspaceSlug} />;
+}
+
 function StatsSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,8 +89,9 @@ type Props = {
 
 export default async function DashboardPage({ params }: Props) {
   const { workspaceSlug } = await params;
-  const { membership } = await requireWorkspaceMember(workspaceSlug);
+  const { user, membership } = await requireWorkspaceMember(workspaceSlug);
   const { workspaceId, workspaceName } = membership;
+  const userId = user.id;
 
   return (
     <div className="p-6 space-y-6">
@@ -113,6 +129,18 @@ export default async function DashboardPage({ params }: Props) {
             />
           </Suspense>
         </div>
+      </div>
+
+      {/* My Tasks */}
+      <div className="border rounded-xl p-5 bg-card">
+        <h2 className="text-sm font-semibold mb-4">My Tasks</h2>
+        <Suspense fallback={<SectionSkeleton rows={3} />}>
+          <DashboardMyTasks
+            workspaceId={workspaceId}
+            userId={userId}
+            workspaceSlug={workspaceSlug}
+          />
+        </Suspense>
       </div>
 
       {/* Activity Feed */}

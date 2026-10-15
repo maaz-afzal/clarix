@@ -31,6 +31,16 @@ export interface OverdueTask {
   assignee?: { name: string; image?: string };
 }
 
+export interface MyTask {
+  _id: string;
+  title: string;
+  projectId: string;
+  projectName: string;
+  dueDate: string | null;
+  priority: string;
+  status: string;
+}
+
 export interface RecentActivityItem {
   _id: string;
   action: string;
@@ -231,6 +241,58 @@ export async function getRecentActivity(
     });
   } catch (error) {
     console.error("Failed to fetch activity:", error);
+    return [];
+  }
+}
+
+export async function getMyTasks(
+  workspaceId: string,
+  userId: string,
+  limit = 5,
+): Promise<MyTask[]> {
+  try {
+    await connectDB();
+
+    const tasks = await Task.find({
+      workspaceId,
+      assigneeId: new mongoose.Types.ObjectId(userId),
+      status: { $ne: "done" },
+    })
+      .select("title projectId dueDate priority status")
+      .sort({ dueDate: 1 })
+      .limit(limit)
+      .lean();
+
+    if (tasks.length === 0) return [];
+
+    const projectIds = [
+      ...new Set(
+        tasks.map((t) => t.projectId.toString()).filter((id): id is string => !!id)
+      ),
+    ];
+    const projects = await Project.find({ _id: { $in: projectIds } })
+      .select("name")
+      .lean();
+
+    const projectMap = projects.reduce(
+      (acc, p) => {
+        acc[p._id.toString()] = p.name;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    return tasks.map((t) => ({
+      _id: t._id.toString(),
+      title: t.title,
+      projectId: t.projectId.toString(),
+      projectName: projectMap[t.projectId.toString()] ?? "Unknown",
+      dueDate: t.dueDate ? t.dueDate.toISOString() : null,
+      priority: t.priority,
+      status: t.status,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch my tasks:", error);
     return [];
   }
 }
