@@ -34,6 +34,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         workspaceSlug={workspaceSlug}
         defaultValue={q ?? ""}
         defaultType={type ?? ""}
+        searchCompleted={results !== null}
       />
 
       {results !== null && (
