@@ -74,6 +74,7 @@ TaskSchema.index({ projectId: 1, status: 1 });
 TaskSchema.index({ projectId: 1, position: 1 });
 TaskSchema.index({ workspaceId: 1, assigneeId: 1 });
 TaskSchema.index({ workspaceId: 1, dueDate: 1 });
+TaskSchema.index({ title: "text", description: "text" });
 
 const Task: Model<ITask> =
   mongoose.models.Task || mongoose.model<ITask>("Task", TaskSchema);

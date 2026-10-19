@@ -52,6 +52,7 @@ const ProjectSchema = new Schema<IProject>(
 
 ProjectSchema.index({ workspaceId: 1, status: 1 });
 ProjectSchema.index({ workspaceId: 1, createdAt: -1 });
+ProjectSchema.index({ name: "text", description: "text" });
 
 const Project: Model<IProject> =
   mongoose.models.Project || mongoose.model<IProject>("Project", ProjectSchema);
