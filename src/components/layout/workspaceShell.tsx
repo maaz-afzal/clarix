@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/layout/Sidebar";
+import SearchShortcut from "@/components/layout/search-shortcut";
 
 type Workspace = {
   _id: string;
@@ -42,6 +43,7 @@ export default function WorkspaceShell({
 
   return (
     <div className="min-h-screen">
+      <SearchShortcut workspaceSlug={workspaceSlug} />
       <Sidebar
         workspaceSlug={workspaceSlug}
         workspaceName={workspaceName}
@@ -59,9 +61,7 @@ export default function WorkspaceShell({
           isCollapsed ? "ml-16" : "ml-60",
         )}
       >
-        <main className="min-h-screen overflow-y-auto">
-          {children}
-        </main>
+        <main className="min-h-screen overflow-y-auto">{children}</main>
       </div>
     </div>
   );
