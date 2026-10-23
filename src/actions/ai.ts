@@ -8,6 +8,7 @@ import {
   generateTaskBreakdownSchema,
   type GenerateTaskDescriptionInput,
   type GenerateTaskBreakdownInput,
+  generatePrioritySuggestionSchema,
 } from "@/lib/validations/ai";
 
 interface AITextResult {
@@ -19,6 +20,13 @@ interface AITextResult {
 interface AIBreakdownResult {
   success: boolean;
   subtasks?: string[];
+  error?: string;
+}
+
+interface AIPriorityResult {
+  success: boolean;
+  priority?: string;
+  reason?: string;
   error?: string;
 }
 
@@ -181,5 +189,65 @@ export async function generateProjectSummary(
   } catch (error) {
     console.error("AI summary error:", error);
     return { success: false, error: "Could not generate summary" };
+  }
+}
+
+export async function generatePrioritySuggestion(
+  workspaceSlug: string,
+  input: { title: string; description?: string },
+): Promise<AIPriorityResult> {
+  await verifyWorkspaceMember(workspaceSlug);
+
+  const result = generatePrioritySuggestionSchema.safeParse(input);
+  if (!result.success) {
+    return { success: false, error: result.error.errors[0].message };
+  }
+
+  const { title, description } = result.data;
+
+  try {
+    const prompt = [
+      `Analyze this software task and suggest the appropriate priority level.`,
+      `Task: "${title}"`,
+      description ? `Description: "${description}"` : "",
+      ``,
+      `Priority levels:`,
+      `- low: Nice to have, no deadline pressure`,
+      `- medium: Normal importance, standard timeline`,
+      `- high: Important, should be done soon`,
+      `- urgent: Critical, needs immediate attention`,
+      ``,
+      `Respond with JSON only:`,
+      `{"priority": "low|medium|high|urgent", "reason": "one sentence explanation"}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const { text } = await generateText({
+      model: geminiFlash,
+      prompt,
+      maxTokens: 100,
+      temperature: 0.3,
+    });
+
+    const cleaned = text
+      .trim()
+      .replace(/```json|```/g, "")
+      .trim();
+    const parsed = JSON.parse(cleaned) as { priority: string; reason: string };
+
+    const validPriorities = ["low", "medium", "high", "urgent"];
+    if (!validPriorities.includes(parsed.priority)) {
+      return { success: false, error: "AI ne valid priority nahi di" };
+    }
+
+    return {
+      success: true,
+      priority: parsed.priority,
+      reason: parsed.reason,
+    };
+  } catch (error) {
+    console.error("Priority suggestion error:", error);
+    return { success: false, error: "Suggestion generate nahi ho saka" };
   }
 }

@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const generatePrioritySuggestionSchema = z.object({
+  title: z.string().min(3).max(500),
+  description: z.string().max(2000).optional(),
+});
+
 export const generateTaskDescriptionSchema = z.object({
   title: z
     .string()
