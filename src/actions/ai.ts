@@ -238,7 +238,7 @@ export async function generatePrioritySuggestion(
 
     const validPriorities = ["low", "medium", "high", "urgent"];
     if (!validPriorities.includes(parsed.priority)) {
-      return { success: false, error: "AI ne valid priority nahi di" };
+      return { success: false, error: "Invalid priority level" };
     }
 
     return {

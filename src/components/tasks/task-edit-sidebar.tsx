@@ -8,6 +8,7 @@ import { updateTask } from "@/actions/task";
 import { updateTaskSchema, type UpdateTaskInput } from "@/lib/validations/task";
 import type { TaskItem } from "@/lib/dal/task";
 import type { MemberWithUser } from "@/lib/dal/members";
+import PrioritySuggester from "@/components/ai/priority-suggester";
 
 const STATUS_OPTIONS = [
   { value: "todo", label: "Todo" },
@@ -80,9 +81,18 @@ export default function TaskEditSidebar({
 
       {/* Priority */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Priority
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Priority
+          </label>
+          <PrioritySuggester
+            workspaceSlug={workspaceSlug}
+            taskTitle={task.title}
+            taskDescription={task.description}
+            currentPriority={task.priority}
+            onAccept={(p) => onFieldChange("priority", p)}
+          />
+        </div>
         <select
           defaultValue={task.priority}
           disabled={isPending}
