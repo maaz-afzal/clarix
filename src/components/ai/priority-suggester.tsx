@@ -31,7 +31,7 @@ export default function PrioritySuggester({
 
   function handleSuggest() {
     if (!taskTitle.trim() || taskTitle.trim().length < 3) {
-      toast.error("Task title kam se kam 3 characters ka hona chahiye");
+      toast.error("Task title must be at least 3 characters long");
       return;
     }
 
@@ -42,7 +42,7 @@ export default function PrioritySuggester({
       });
 
       if (!result.success) {
-        toast.error(result.error || "Suggestion generate nahi ho saka");
+        toast.error(result.error || "Could not generate priority suggestion");
         return;
       }
 
@@ -88,7 +88,7 @@ export default function PrioritySuggester({
           { duration: 8000 },
         );
       } else if (result.priority === currentPriority) {
-        toast.success(`Current priority "${currentPriority}" sahi hai!`);
+        toast.success(`Current priority "${currentPriority}" is correct!`);
       }
     });
   }
@@ -99,7 +99,7 @@ export default function PrioritySuggester({
       onClick={handleSuggest}
       disabled={isPending}
       className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
-      title="AI se priority suggest karwao"
+      title="Get priority suggested by AI"
     >
       {isPending ? (
         <span className="h-3 w-3 border border-primary border-t-transparent rounded-full animate-spin" />

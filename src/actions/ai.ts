@@ -248,6 +248,6 @@ export async function generatePrioritySuggestion(
     };
   } catch (error) {
     console.error("Priority suggestion error:", error);
-    return { success: false, error: "Suggestion generate nahi ho saka" };
+    return { success: false, error: "Suggestion could not be generated" };
   }
 }

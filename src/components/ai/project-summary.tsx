@@ -28,7 +28,7 @@ export default function ProjectSummary({
 
   function handleGenerate() {
     if (stats.total === 0) {
-      toast.error("Project mein tasks hone chahiye summary ke liye")
+      toast.error("Project must have tasks to generate a summary")
       return
     }
 
@@ -40,7 +40,7 @@ export default function ProjectSummary({
       )
 
       if (!result.success) {
-        toast.error(result.error || "Summary generate nahi ho saki")
+        toast.error(result.error || "Could not generate project summary")
         return
       }
 
@@ -104,10 +104,10 @@ export default function ProjectSummary({
       ) : (
         <p className="text-xs text-muted-foreground">
           {stats.total === 0
-            ? "Tasks add karo phir summary generate karo"
-            : "Project ka AI-powered status summary generate karo"}
+            ? "Add tasks first, then generate a summary"
+            : "Generate an AI-powered status summary of the project"}
         </p>
       )}
     </div>
-  )
+  );
 }
