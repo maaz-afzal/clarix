@@ -9,6 +9,7 @@ import { createTaskSchema, type CreateTaskInput } from "@/lib/validations/task";
 import { createTask } from "@/actions/task";
 import { generateTaskDescription } from "@/actions/ai";
 import AIDescriptionButton from "../ai/ai-description-button";
+import PrioritySuggester from "@/components/ai/priority-suggester";
 
 interface Member {
   userId: string;
@@ -62,6 +63,9 @@ export default function CreateTaskForm({
       priority: "medium",
     },
   });
+
+  const titleValue = watch("title");
+  const descriptionValue = watch("description");
 
   function onSubmit(data: CreateTaskInput) {
     startTransition(async () => {
@@ -134,7 +138,18 @@ export default function CreateTaskForm({
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Priority</label>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Priority</label>
+            <PrioritySuggester
+              workspaceSlug={workspaceSlug}
+              taskTitle={titleValue ?? ""}
+              taskDescription={descriptionValue}
+              currentPriority={watch("priority") ?? "medium"}
+              onAccept={(p) =>
+                setValue("priority", p as CreateTaskInput["priority"])
+              }
+            />
+          </div>
           <select
             {...register("priority")}
             disabled={isPending}
