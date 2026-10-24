@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, File, Image, Loader2 } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,7 @@ export default function FileUploader({
 }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function uploadFile(file: File) {
@@ -40,6 +41,7 @@ export default function FileUploader({
     }
 
     setIsUploading(true);
+    setUploadingFileName(file.name);
 
     try {
       const formData = new FormData();
@@ -65,6 +67,7 @@ export default function FileUploader({
       toast.error("Failed to upload file");
     } finally {
       setIsUploading(false);
+      setUploadingFileName(null);
     }
   }
 
@@ -107,9 +110,17 @@ export default function FileUploader({
       />
 
       {isUploading ? (
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 w-full">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          <p className="text-xs text-muted-foreground">Uploading...</p>
+          <p className="text-xs text-muted-foreground">
+            {uploadingFileName ? `Uploading "${uploadingFileName}"...` : "Uploading..."}
+          </p>
+          <div className="w-full max-w-xs bg-muted rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-primary h-full rounded-full animate-pulse"
+              style={{ width: "100%" }}
+            />
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
