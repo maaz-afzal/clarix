@@ -11,6 +11,8 @@ import CommentSection from "@/components/tasks/comment-section";
 import ActivityLog from "@/components/tasks/activity-log";
 import TaskEditSidebar from "@/components/tasks/task-edit-sidebar";
 import TaskTitleEditor from "@/components/tasks/task-title-editor";
+import AttachmentsSection from "@/components/tasks/attachments-section";
+import { getTaskAttachments } from "@/lib/dal/attachments";
 import type { Metadata } from "next";
 
 type Props = {
@@ -38,11 +40,12 @@ export default async function TaskDetailPage({ params }: Props) {
     notFound();
   }
 
-  const [comments, activities, members, project] = await Promise.all([
+  const [comments, activities, members, project, attachments] = await Promise.all([
     getTaskComments(taskId),
     getTaskActivity(taskId),
     getWorkspaceMembers(membership.workspaceId),
     getProjectById(task.projectId),
+    getTaskAttachments(taskId),
   ]);
 
   return (
@@ -102,6 +105,16 @@ export default async function TaskDetailPage({ params }: Props) {
               task={task}
               workspaceSlug={workspaceSlug}
               projectName={project?.name}
+            />
+          </div>
+          <div className="border-t pt-4 mt-4">
+            <AttachmentsSection
+              initialAttachments={attachments}
+              workspaceSlug={workspaceSlug}
+              taskId={taskId}
+              projectId={projectId}
+              currentUserId={user.id}
+              currentUserRole={membership.role}
             />
           </div>
         </div>
