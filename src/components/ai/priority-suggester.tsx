@@ -51,7 +51,7 @@ export default function PrioritySuggester({
           (t) => (
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-sm font-medium">AI ka suggestion</p>
+                <p className="text-sm font-medium">AI suggestion</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Priority:{" "}
                   <span
