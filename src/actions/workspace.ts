@@ -16,6 +16,8 @@ import {
 import Task from "@/models/Task";
 import Project from "@/models/Project";
 import Activity from "@/models/Activity";
+import Notification from "@/models/Notification";
+import { Types } from "mongoose";
 
 interface CreateWorkspaceResult {
   success: boolean;
@@ -157,7 +159,7 @@ export async function deleteWorkspace(
   try {
     await connectDB();
 
-    const workspaceObjectId = new mongoose.Types.ObjectId(
+    const workspaceObjectId = new Types.ObjectId(
       membership.workspaceId,
     );
 
