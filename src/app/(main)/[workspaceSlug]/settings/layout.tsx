@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { requireWorkspaceMember } from "@/lib/authorization";
 import { hasPermission } from "@/lib/authorization";
 import type { MemberRole } from "@/lib/authorization";
+import SettingsTabs from "@/components/layout/settings-tabs";
 
 type Props = {
   children: React.ReactNode;
@@ -22,6 +22,7 @@ export default async function SettingsLayout({ children, params }: Props) {
     ...(canManageMembers
       ? [{ label: "Members", href: `/${workspaceSlug}/settings/members` }]
       : []),
+    { label: "Profile", href: `/${workspaceSlug}/settings/profile` },
   ];
 
   return (
@@ -34,17 +35,7 @@ export default async function SettingsLayout({ children, params }: Props) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b mb-6">
-        {settingsTabs.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent hover:border-border -mb-px"
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </div>
+      <SettingsTabs tabs={settingsTabs} workspaceSlug={workspaceSlug} />
 
       {children}
     </div>
