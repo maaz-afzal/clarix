@@ -1,6 +1,6 @@
 "use server";
 
-import { redirect } from "next/navigation";
+  import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/db";
 import Workspace from "@/models/Workspace";
@@ -13,6 +13,9 @@ import {
   UpdateWorkspaceInput,
   updateWorkspaceSchema,
 } from "@/lib/validations/workspace";
+import Task from "@/models/Task";
+import Project from "@/models/Project";
+import Activity from "@/models/Activity";
 
 interface CreateWorkspaceResult {
   success: boolean;
@@ -133,5 +136,43 @@ export async function updateWorkspace(
       success: false,
       error: "Could not update workspace. Please try again.",
     };
+  }
+}
+
+export async function deleteWorkspace(
+  workspaceSlug: string,
+): Promise<{ success: boolean; error?: string }> {
+  const { userId, membership } = await verifyPermission(
+    workspaceSlug,
+    "workspace_delete",
+  );
+
+  if (membership.role !== "owner") {
+    return {
+      success: false,
+      error: "Only the workspace owner can delete it",
+    };
+  }
+
+  try {
+    await connectDB();
+
+    const workspaceObjectId = new mongoose.Types.ObjectId(
+      membership.workspaceId,
+    );
+
+    await Promise.all([
+      Task.deleteMany({ workspaceId: workspaceObjectId }),
+      Project.deleteMany({ workspaceId: workspaceObjectId }),
+      WorkspaceMember.deleteMany({ workspaceId: workspaceObjectId }),
+      Notification.deleteMany({ workspaceId: workspaceObjectId }),
+      Activity.deleteMany({ workspaceId: workspaceObjectId }),
+      Workspace.findOneAndDelete({ slug: workspaceSlug }),
+    ]);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Delete workspace error:", error);
+    return { success: false, error: "Failed to delete workspace" };
   }
 }
