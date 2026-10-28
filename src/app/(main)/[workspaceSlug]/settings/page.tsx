@@ -3,6 +3,10 @@ import { getWorkspaceBySlug } from "@/lib/dal/workspace";
 import { requireWorkspaceMember } from "@/lib/authorization";
 import { hasPermission, type MemberRole } from "@/lib/authorization";
 import WorkspaceSettingsForm from "@/components/settings/workspace-setting-form";
+import DangerZone from "@/components/settings/danger-zone";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Settings" };
 
 type Props = {
   params: Promise<{ workspaceSlug: string }>;
@@ -11,23 +15,25 @@ type Props = {
 export default async function SettingsPage({ params }: Props) {
   const { workspaceSlug } = await params;
 
-  const workspace = await getWorkspaceBySlug(workspaceSlug);
+  const [workspace, { membership }] = await Promise.all([
+    getWorkspaceBySlug(workspaceSlug),
+    requireWorkspaceMember(workspaceSlug),
+  ]);
 
   if (!workspace) {
     notFound();
   }
-
-  const { membership } = await requireWorkspaceMember(workspaceSlug);
 
   const canUpdate = hasPermission(
     membership.role as MemberRole,
     "workspace_update",
   );
 
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-2">Workspace Settings</h1>
+  const isOwner = membership.role === "owner";
 
+  return (
+    <div className="space-y-8">
+      {/* General Settings */}
       {canUpdate ? (
         <WorkspaceSettingsForm
           workspaceSlug={workspaceSlug}
@@ -36,25 +42,40 @@ export default async function SettingsPage({ params }: Props) {
           slug={workspace.slug}
         />
       ) : (
-        <div className="mt-6 space-y-2">
-          <p>
-            <strong>Name:</strong> {workspace.name}
-          </p>
-
-          <p>
-            <strong>Description:</strong>{" "}
-            {workspace.description || "No description"}
-          </p>
-
-          <p>
-            <strong>Slug:</strong> {workspace.slug}
-          </p>
-
-          <p>
-            <strong>Role:</strong> {membership.role}
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+              Name
+            </p>
+            <p className="text-sm">{workspace.name}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+              Slug
+            </p>
+            <p className="text-sm font-mono">{workspace.slug}</p>
+          </div>
+          {workspace.description && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+                Description
+              </p>
+              <p className="text-sm">{workspace.description}</p>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Your role is {membership.role} - you don't have permission to edit
+            settings
           </p>
         </div>
       )}
+
+      {/* Danger Zone */}
+      <DangerZone
+        workspaceSlug={workspaceSlug}
+        workspaceName={workspace.name}
+        isOwner={isOwner}
+      />
     </div>
   );
 }
