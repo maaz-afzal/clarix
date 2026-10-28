@@ -211,7 +211,8 @@ export default function Sidebar({
             isCollapsed ? "flex justify-center p-1" : "p-2",
           )}
         >
-          <div
+          <Link
+            href={`/${workspaceSlug}/settings/profile`}
             className={cn(
               "flex items-center",
               isCollapsed ? "justify-center" : "gap-3",
@@ -241,7 +242,7 @@ export default function Sidebar({
                 </p>
               </div>
             )}
-          </div>
+          </Link>
 
           {!isCollapsed && (
             <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
