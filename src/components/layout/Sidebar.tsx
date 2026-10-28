@@ -14,12 +14,15 @@ import {
 import { cn } from "@/lib/utils";
 import LogoutButton from "../auth/logout-button";
 import WorkspaceSwitcher from "@/components/layout/workspace-switcher";
+import ThemeToggle from "@/components/layout/theme-toggle";
 
 interface SidebarProps {
   workspaceSlug: string;
   workspaceName: string;
   isCollapsed: boolean;
   onToggle: () => void;
+  className?: string;
+  onNavigate?: () => void;
   user: {
     name: string;
     email: string;
@@ -50,6 +53,8 @@ export default function Sidebar({
   workspaceName,
   isCollapsed,
   onToggle,
+  className,
+  onNavigate,
   user,
   workspaces,
   navProjects,
@@ -88,8 +93,11 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-card transition-[width] duration-200",
-        isCollapsed ? "w-16" : "w-60",
+        "fixed inset-y-0 left-0 z-50 flex flex-col",
+        "border-r border-sidebar-border bg-sidebar",
+        "transition-[width,transform] duration-300 ease-in-out",
+        isCollapsed ? "w-60 md:w-16" : "w-60",
+        className,
       )}
     >
       <div
@@ -125,6 +133,7 @@ export default function Sidebar({
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               title={isCollapsed ? item.label : undefined}
               className={cn(
                 "flex items-center rounded-md text-sm transition-colors",
@@ -162,6 +171,7 @@ export default function Sidebar({
                   <Link
                     key={project._id}
                     href={`/${workspaceSlug}/projects/${project._id}`}
+                    onClick={onNavigate}
                     title={isCollapsed ? project.name : undefined}
                     className={cn(
                       "flex items-center rounded-md text-sm transition-colors",
@@ -191,39 +201,52 @@ export default function Sidebar({
 
       <div
         className={cn(
-          "border-t transition-[padding] duration-200",
+          "border-t border-border/70 bg-background/80 transition-all duration-200",
           isCollapsed ? "p-2" : "p-3",
         )}
       >
         <div
           className={cn(
-            "flex items-center rounded-md transition-colors hover:bg-accent",
-            isCollapsed ? "h-10 justify-center px-0" : "gap-3 px-3 py-2",
+            "rounded-xl transition-colors duration-200 hover:bg-accent/50",
+            isCollapsed ? "flex justify-center p-1" : "p-2",
           )}
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
-            {user.image ? (
-              <img
-                src={user.image}
-                alt={user.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold text-primary">
-                {user.name.slice(0, 2).toUpperCase()}
-              </span>
+          <div
+            className={cn(
+              "flex items-center",
+              isCollapsed ? "justify-center" : "gap-3",
+            )}
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-primary/10">
+              {user.image ? (
+                <img
+                  src={user.image}
+                  alt={user.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-semibold tracking-wide text-primary">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+            </div>
+
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold leading-5 text-foreground">
+                  {user.name}
+                </p>
+                <p className="truncate text-xs leading-4 text-muted-foreground">
+                  {user.email}
+                </p>
+              </div>
             )}
           </div>
 
           {!isCollapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{user.name}</p>
-
-              <p className="truncate text-xs text-muted-foreground">
-                {user.email}
-              </p>
-
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
               <LogoutButton />
+              <ThemeToggle />
             </div>
           )}
         </div>
@@ -233,7 +256,7 @@ export default function Sidebar({
         type="button"
         onClick={onToggle}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute right-0 top-1/2 z-50 flex h-10 w-5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="absolute right-0 top-1/2 z-50 hidden h-10 w-5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground md:flex"
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4" />
