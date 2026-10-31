@@ -20,6 +20,23 @@ const ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
+const MAGIC_BYTES: Record<string, number[][]> = {
+  "image/jpeg": [[0xff, 0xd8, 0xff]],
+  "image/png": [[0x89, 0x50, 0x4e, 0x47]],
+  "image/gif": [[0x47, 0x49, 0x46, 0x38]],
+  "image/webp": [[0x52, 0x49, 0x46, 0x46]],
+  "application/pdf": [[0x25, 0x50, 0x44, 0x46]],
+};
+
+function verifyFileSignature(buffer: Buffer, mimeType: string): boolean {
+  const signatures = MAGIC_BYTES[mimeType];
+  if (!signatures) return true;
+
+  return signatures.some((sig) =>
+    sig.every((byte, index) => buffer[index] === byte),
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -82,6 +99,13 @@ export async function POST(request: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    if (MAGIC_BYTES[file.type] && !verifyFileSignature(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "File is corrupted or of the wrong type" },
+        { status: 400 },
+      );
+    }
 
     const uploadResult = await uploadFile(
       buffer,
