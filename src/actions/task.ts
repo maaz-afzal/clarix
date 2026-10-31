@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/db";
 import Task from "@/models/Task";
 import Activity from "@/models/Activity";
-import { verifyPermission, verifyTaskAccess, verifyWorkspaceMember } from "@/lib/authorization";
+import {
+  verifyPermission,
+  verifyTaskAccess,
+  verifyWorkspaceMember,
+} from "@/lib/authorization";
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -13,6 +17,7 @@ import {
 } from "@/lib/validations/task";
 import mongoose from "mongoose";
 import { createNotification } from "@/lib/notifications";
+import { auth } from "@/lib/auth";
 
 interface TaskActionResult {
   success: boolean;
@@ -37,8 +42,7 @@ async function logActivity(
       action,
       metadata,
     });
-  } catch {
-  }
+  } catch {}
 }
 
 export async function createTask(
@@ -113,9 +117,9 @@ export async function updateTask(
   if (!result.success) {
     return { success: false, error: result.error.errors[0].message };
   }
-
-  const { userId } = await verifyPermission(workspaceSlug, "task_update_own");
-
+  const session = await auth();
+  const userId = session!.user!.id!;
+  
   try {
     await connectDB();
 
@@ -207,25 +211,25 @@ export async function deleteTask(
 
 export async function updateTaskPositions(
   workspaceSlug: string,
-  updates: { taskId: string; position: number; status: string }[]
+  updates: { taskId: string; position: number; status: string }[],
 ): Promise<TaskActionResult> {
-  await verifyWorkspaceMember(workspaceSlug)
+  await verifyWorkspaceMember(workspaceSlug);
 
   try {
-    await connectDB()
+    await connectDB();
 
     const bulkOps = updates.map(({ taskId, position, status }) => ({
       updateOne: {
         filter: { _id: new mongoose.Types.ObjectId(taskId) },
         update: { $set: { position, status } },
       },
-    }))
+    }));
 
-    await Task.bulkWrite(bulkOps)
+    await Task.bulkWrite(bulkOps);
 
-    return { success: true }
+    return { success: true };
   } catch (error) {
-    console.error("Position update error:", error)
-    return { success: false, error: "Positions update nahi ho sake" }
+    console.error("Position update error:", error);
+    return { success: false, error: "Positions update nahi ho sake" };
   }
 }
