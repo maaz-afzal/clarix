@@ -213,12 +213,28 @@ export async function updateTaskPositions(
   workspaceSlug: string,
   updates: { taskId: string; position: number; status: string }[],
 ): Promise<TaskActionResult> {
-  await verifyWorkspaceMember(workspaceSlug);
+  const { membership } = await verifyWorkspaceMember(workspaceSlug);
 
   try {
     await connectDB();
 
-    const bulkOps = updates.map(({ taskId, position, status }) => ({
+    const taskIds = updates.map((u) => new mongoose.Types.ObjectId(u.taskId));
+    const validTasks = await Task.find({
+      _id: { $in: taskIds },
+      workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+    })
+      .select("_id")
+      .lean();
+
+    const validTaskIds = new Set(validTasks.map((t) => t._id.toString()));
+
+    const validUpdates = updates.filter((u) => validTaskIds.has(u.taskId));
+
+    if (validUpdates.length === 0) {
+      return { success: true };
+    }
+
+    const bulkOps = validUpdates.map(({ taskId, position, status }) => ({
       updateOne: {
         filter: { _id: new mongoose.Types.ObjectId(taskId) },
         update: { $set: { position, status } },
