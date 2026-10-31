@@ -10,6 +10,7 @@ import {
   type GenerateTaskBreakdownInput,
   generatePrioritySuggestionSchema,
 } from "@/lib/validations/ai";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 interface AITextResult {
   success: boolean;
@@ -34,7 +35,16 @@ export async function generateTaskDescription(
   workspaceSlug: string,
   input: GenerateTaskDescriptionInput,
 ): Promise<AITextResult> {
-  await verifyWorkspaceMember(workspaceSlug);
+  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+
+  const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
+
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: "Too many AI requests. 20 requests are allowed per hour.",
+    };
+  }
 
   const result = generateTaskDescriptionSchema.safeParse(input);
   if (!result.success) {
@@ -82,7 +92,20 @@ export async function generateTaskBreakdown(
   workspaceSlug: string,
   input: GenerateTaskBreakdownInput,
 ): Promise<AIBreakdownResult> {
-  await verifyWorkspaceMember(workspaceSlug);
+  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+
+  const rateLimit = checkRateLimit(
+    `ai:${userId}`,
+    20,
+    60 * 60 * 1000,
+  );
+
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: "Too many AI requests. 20 requests are allowed per hour.",
+    };
+  }
 
   const result = generateTaskBreakdownSchema.safeParse(input);
   if (!result.success) {
@@ -150,7 +173,16 @@ export async function generateProjectSummary(
     overdue: number;
   },
 ): Promise<AITextResult> {
-  await verifyWorkspaceMember(workspaceSlug);
+  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+
+  const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
+
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: "Too many AI requests. 20 requests are allowed per hour.",
+    };
+  }
 
   if (!projectName || stats.total === 0) {
     return {
@@ -196,8 +228,16 @@ export async function generatePrioritySuggestion(
   workspaceSlug: string,
   input: { title: string; description?: string },
 ): Promise<AIPriorityResult> {
-  await verifyWorkspaceMember(workspaceSlug);
+  const { userId } = await verifyWorkspaceMember(workspaceSlug);
 
+  const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
+
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: "Too many AI requests. 20 requests are allowed per hour.",
+    };
+  }
   const result = generatePrioritySuggestionSchema.safeParse(input);
   if (!result.success) {
     return { success: false, error: result.error.errors[0].message };
