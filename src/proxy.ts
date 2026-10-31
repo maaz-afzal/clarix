@@ -9,7 +9,8 @@ export default auth((request) => {
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/register");
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/invite");
 
   const isAuthRoute =
     pathname.startsWith("/login") || pathname.startsWith("/register");
