@@ -246,6 +246,6 @@ export async function updateTaskPositions(
     return { success: true };
   } catch (error) {
     console.error("Position update error:", error);
-    return { success: false, error: "Positions update nahi ho sake" };
+    return { success: false, error: "Could not update positions" };
   }
 }
