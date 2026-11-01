@@ -10,6 +10,13 @@ import {
   type UpdateProjectInput,
 } from "@/lib/validations/project";
 import { updateProject } from "@/actions/project";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const PROJECT_COLORS = [
   "#6366f1",
@@ -58,7 +65,6 @@ export default function EditProjectDialog({
     },
   });
 
-  // Dialog open hone pe reset karo
   useEffect(() => {
     if (isOpen) {
       reset({
@@ -76,38 +82,29 @@ export default function EditProjectDialog({
       const result = await updateProject(workspaceSlug, project._id, data);
 
       if (!result.success) {
-        toast.error(result.error || "Update nahi ho saka");
+        toast.error(result.error || "Could not update project.");
         return;
       }
 
-      toast.success("Project update ho gaya!");
+      toast.success("Project updated successfully.");
       onClose();
     });
   }
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative z-10 w-full max-w-md bg-card border rounded-xl shadow-lg p-6 mx-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Project Edit Karo</h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-md hover:bg-accent transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Project</DialogTitle>
+          <DialogDescription>
+            Update the project's name, description, and color.
+          </DialogDescription>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">
-              Project naam <span className="text-destructive">*</span>
+              Project Name <span className="text-destructive">*</span>
             </label>
             <input
               {...register("name")}
@@ -175,7 +172,7 @@ export default function EditProjectDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
