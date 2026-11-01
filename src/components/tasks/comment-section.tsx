@@ -65,7 +65,8 @@ export default function CommentSection({
         taskId,
         projectId,
       );
-      if (!result.success) toast.error(result.error || "Could not delete comment");
+      if (!result.success)
+        toast.error(result.error || "Could not delete comment");
       else toast.success("Comment deleted successfully");
     });
   }
@@ -114,11 +115,13 @@ export default function CommentSection({
                     </span>
                     {canDelete && (
                       <button
+                        type="button"
                         onClick={() => handleDelete(comment._id)}
                         disabled={isPending}
+                        aria-label="Delete comment"
                         className="ml-auto text-xs text-muted-foreground hover:text-destructive transition-colors"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3" aria-hidden="true" />
                       </button>
                     )}
                   </div>

@@ -29,14 +29,15 @@ export default function ThemeToggle() {
           key={value}
           type="button"
           onClick={() => setTheme(value)}
+          aria-label={`${value} theme`}
+          aria-pressed={theme === value}
           className={`p-1.5 transition-colors ${
             theme === value
               ? "bg-primary text-primary-foreground"
               : "hover:bg-accent text-muted-foreground"
           }`}
-          title={value.charAt(0).toUpperCase() + value.slice(1)}
         >
-          <Icon className="w-3.5 h-3.5" />
+          <Icon className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       ))}
     </div>

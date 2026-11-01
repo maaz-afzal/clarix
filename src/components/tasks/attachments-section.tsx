@@ -115,16 +115,19 @@ export default function AttachmentsSection({
                   href={attachment.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                  aria-label={`Open ${attachment.fileName}`}
+                  className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground focus-visible:opacity-100"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                 </a>
                 <button
+                  type="button"
                   onClick={() => handleDelete(attachment._id)}
                   disabled={isPending}
-                  className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                  aria-label={`Delete ${attachment.fileName}`}
+                  className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity disabled:opacity-50"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             </div>
