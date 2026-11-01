@@ -72,7 +72,8 @@ export default function TaskListView({
       const result = await updateTask(workspaceSlug, taskId, {
         status: newStatus as TaskItem["status"],
       });
-      if (!result.success) toast.error(result.error || "Failed to update task status");
+      if (!result.success)
+        toast.error(result.error || "Failed to update task status");
     });
   }
 
@@ -196,7 +197,7 @@ export default function TaskListView({
             </div>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full min-w-180 text-sm">
             <thead className="border-b bg-muted/30 sticky top-0">
               <tr>
                 <th className="text-left px-6 py-3 font-medium text-muted-foreground w-[40%]">
@@ -321,9 +322,10 @@ export default function TaskListView({
                     {canManage && (
                       <td className="px-4 py-3">
                         <button
+                          type="button"
                           onClick={() => handleDelete(task._id)}
                           disabled={isPending}
-                          className="opacity-0 group-hover:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
+                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
                         >
                           Delete
                         </button>
