@@ -103,13 +103,17 @@ export default function ProjectCard({
           {canManage && (
             <div className="relative">
               <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   setMenuOpen((o) => !o);
                 }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-accent"
+                aria-label={`Actions for ${project.name}`}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded hover:bg-accent"
               >
-                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
               </button>
 
               {menuOpen && (

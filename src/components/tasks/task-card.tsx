@@ -94,13 +94,20 @@ export default function TaskCard({
 
         <div className="relative shrink-0">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setMenuOpen((o) => !o);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent"
+            aria-label={`Actions for task ${task.title}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent"
           >
-            <MoreHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+            <MoreHorizontal
+              className="w-3.5 h-3.5 text-muted-foreground"
+              aria-hidden="true"
+            />
           </button>
 
           {menuOpen && (
