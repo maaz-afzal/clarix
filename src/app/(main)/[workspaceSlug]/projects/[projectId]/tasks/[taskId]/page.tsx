@@ -40,13 +40,14 @@ export default async function TaskDetailPage({ params }: Props) {
     notFound();
   }
 
-  const [comments, activities, members, project, attachments] = await Promise.all([
-    getTaskComments(taskId),
-    getTaskActivity(taskId),
-    getWorkspaceMembers(membership.workspaceId),
-    getProjectById(task.projectId),
-    getTaskAttachments(taskId),
-  ]);
+  const [comments, activities, members, project, attachments] =
+    await Promise.all([
+      getTaskComments(taskId),
+      getTaskActivity(taskId),
+      getWorkspaceMembers(membership.workspaceId),
+      getProjectById(task.projectId),
+      getTaskAttachments(taskId),
+    ]);
 
   return (
     <div className="flex flex-col h-full">
@@ -61,9 +62,9 @@ export default async function TaskDetailPage({ params }: Props) {
         </Link>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      {/* Main content wrapper */}
+      <div className="flex flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+        <div className="flex-1 p-6 space-y-6 lg:overflow-y-auto">
           <div className="space-y-3">
             <TaskTitleEditor task={task} workspaceSlug={workspaceSlug} />
           </div>
@@ -91,8 +92,10 @@ export default async function TaskDetailPage({ params }: Props) {
           )}
         </div>
 
-        {/* Right - Edit sidebar */}
-        <div className="w-64 border-l p-4 overflow-y-auto shrink-0">
+        <aside
+          aria-label="Task details"
+          className="w-full shrink-0 border-t p-4 lg:w-64 lg:overflow-y-auto lg:border-l lg:border-t-0"
+        >
           <h3 className="text-sm font-semibold mb-4">Details</h3>
           <TaskEditSidebar
             task={task}
@@ -117,7 +120,7 @@ export default async function TaskDetailPage({ params }: Props) {
               currentUserRole={membership.role}
             />
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );
