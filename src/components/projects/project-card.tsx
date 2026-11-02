@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   MoreHorizontal,
@@ -39,6 +39,7 @@ export default function ProjectCard({
   workspaceSlug,
   canManage,
 }: ProjectCardProps) {
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -104,6 +105,7 @@ export default function ProjectCard({
             <div className="relative">
               <button
                 type="button"
+                ref={menuButtonRef}
                 onClick={(e) => {
                   e.preventDefault();
                   setMenuOpen((o) => !o);
@@ -215,6 +217,7 @@ export default function ProjectCard({
         project={project}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
+        returnFocusRef={menuButtonRef}
       />
     </>
   );

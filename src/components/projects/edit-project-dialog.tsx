@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   updateProjectSchema,
@@ -39,6 +38,7 @@ interface EditProjectDialogProps {
   };
   isOpen: boolean;
   onClose: () => void;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 export default function EditProjectDialog({
@@ -46,6 +46,7 @@ export default function EditProjectDialog({
   project,
   isOpen,
   onClose,
+  returnFocusRef,
 }: EditProjectDialogProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -73,7 +74,14 @@ export default function EditProjectDialog({
         color: project.color,
       });
     }
-  }, [isOpen, project, reset]);
+  }, [isOpen, project.name, project.description, project.color, reset]);
+
+  // Return focus to trigger element when dialog closes
+  useEffect(() => {
+    if (!isOpen && returnFocusRef?.current) {
+      returnFocusRef.current.focus();
+    }
+  }, [isOpen, returnFocusRef]);
 
   const selectedColor = watch("color");
 
@@ -97,16 +105,17 @@ export default function EditProjectDialog({
         <DialogHeader>
           <DialogTitle>Edit Project</DialogTitle>
           <DialogDescription>
-            Update the project's name, description, and color.
+            Update name, description and color.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">
+            <label htmlFor="edit-project-name" className="text-sm font-medium">
               Project Name <span className="text-destructive">*</span>
             </label>
             <input
+              id="edit-project-name"
               {...register("name")}
               disabled={isPending}
               className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
@@ -117,8 +126,11 @@ export default function EditProjectDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Description</label>
+            <label htmlFor="edit-project-description" className="text-sm font-medium">
+              Description
+            </label>
             <textarea
+              id="edit-project-description"
               {...register("description")}
               rows={3}
               disabled={isPending}
@@ -127,19 +139,29 @@ export default function EditProjectDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Color</label>
-            <div className="flex gap-2 flex-wrap">
+            <span id="edit-project-color-label" className="text-sm font-medium">
+              Color
+            </span>
+            <div
+              role="group"
+              aria-labelledby="edit-project-color-label"
+              className="flex gap-2 flex-wrap"
+            >
               {PROJECT_COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"
-                  onClick={() => setValue("color", color)}
+                  onClick={() => setValue("color", color, { shouldDirty: true })}
                   disabled={isPending}
+                  aria-label={`Color ${color}`}
+                  aria-pressed={selectedColor === color}
                   className="w-7 h-7 rounded-full transition-transform hover:scale-110 disabled:opacity-50 flex items-center justify-center"
                   style={{ backgroundColor: color }}
                 >
                   {selectedColor === color && (
-                    <span className="text-white text-xs font-bold">✓</span>
+                    <span aria-hidden="true" className="text-white text-xs font-bold">
+                      ✓
+                    </span>
                   )}
                 </button>
               ))}
