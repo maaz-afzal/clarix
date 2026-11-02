@@ -18,6 +18,7 @@ import {
 import mongoose from "mongoose";
 import { createNotification } from "@/lib/notifications";
 import { auth } from "@/lib/auth";
+import { safeAction } from "@/lib/errors";
 
 interface TaskActionResult {
   success: boolean;
@@ -193,20 +194,22 @@ export async function deleteTask(
   workspaceSlug: string,
   taskId: string,
 ): Promise<TaskActionResult> {
-  const task = await verifyTaskAccess(taskId, workspaceSlug, "delete");
+  return safeAction(async () => {
+    const task = await verifyTaskAccess(taskId, workspaceSlug, "delete");
 
-  try {
-    await connectDB();
+    try {
+      await connectDB();
 
-    await Task.findByIdAndDelete(taskId);
+      await Task.findByIdAndDelete(taskId);
 
-    revalidatePath(`/${workspaceSlug}/projects/${task.projectId.toString()}`);
+      revalidatePath(`/${workspaceSlug}/projects/${task.projectId.toString()}`);
 
-    return { success: true };
-  } catch (error) {
-    console.error("Task delete error:", error);
-    return { success: false, error: "Task delete cannot be completed" };
-  }
+      return { success: true };
+    } catch (error) {
+      console.error("Task delete error:", error);
+      return { success: false, error: "Failed to delete task" };
+    }
+  });
 }
 
 export async function updateTaskPositions(
