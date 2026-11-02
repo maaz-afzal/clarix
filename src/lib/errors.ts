@@ -1,29 +1,37 @@
+import { unstable_rethrow } from "next/navigation"
+
 export const ERROR_MESSAGES = {
-  UNAUTHENTICATED: "Login is required",
-  UNAUTHORIZED: "No access",
-  FORBIDDEN: "You don't have permission to perform this action",
+  UNAUTHENTICATED: "Login required",
+  UNAUTHORIZED: "You do not have access to this workspace",
+  FORBIDDEN: "You are not allowed to perform this action",
   NOT_FOUND: "Resource not found",
   INTERNAL: "Something went wrong. Please try again.",
-  VALIDATION: "Invalid input",
+  VALIDATION: "Input is invalid",
   RATE_LIMITED: "Too many requests. Please try again later.",
-} as const;
+} as const
 
-export function handleActionError(error: unknown): {
-  success: false;
-  error: string;
-} {
+export type ActionFailure = { success: false; error: string }
+
+export function handleActionError(error: unknown): ActionFailure {
+  unstable_rethrow(error)
+
   if (error instanceof Error) {
-    if (error.message === "UNAUTHENTICATED") {
-      return { success: false, error: ERROR_MESSAGES.UNAUTHENTICATED };
-    }
-    if (error.message === "UNAUTHORIZED") {
-      return { success: false, error: ERROR_MESSAGES.UNAUTHORIZED };
-    }
-    if (error.message === "FORBIDDEN") {
-      return { success: false, error: ERROR_MESSAGES.FORBIDDEN };
+    if (error.message in ERROR_MESSAGES) {
+      const key = error.message as keyof typeof ERROR_MESSAGES
+      return { success: false, error: ERROR_MESSAGES[key] }
     }
   }
 
-  console.error("Unhandled action error:", error);
-  return { success: false, error: ERROR_MESSAGES.INTERNAL };
+  console.error("Unhandled action error:", error)
+  return { success: false, error: ERROR_MESSAGES.INTERNAL }
+}
+
+export async function safeAction<T extends { success: boolean }>(
+  fn: () => Promise<T>
+): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    return handleActionError(error) as unknown as T
+  }
 }
