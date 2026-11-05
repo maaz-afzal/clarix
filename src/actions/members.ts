@@ -161,13 +161,17 @@ export async function updateMemberRole(
     try {
       await connectDB();
 
-      await WorkspaceMember.findOneAndUpdate(
+      const updated = await WorkspaceMember.findOneAndUpdate(
         {
           workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
           userId: new mongoose.Types.ObjectId(targetUserId),
         },
         { role: result.data.role },
       );
+
+      if (!updated) {
+        return { success: false, error: "Member not found" };
+      }
 
       revalidatePath(`/${workspaceSlug}/settings/members`);
       return { success: true };
@@ -183,12 +187,19 @@ export async function cancelInvitation(
   invitationId: string,
 ): Promise<ActionResult> {
   return safeAction(async () => {
-    await verifyPermission(workspaceSlug, "member_invite");
+    const { membership } = await verifyPermission(workspaceSlug, "member_invite");
 
     try {
       await connectDB();
 
-      await Invitation.findByIdAndDelete(invitationId);
+      const deleted = await Invitation.findOneAndDelete({
+        _id: new mongoose.Types.ObjectId(invitationId),
+        workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+      });
+
+      if (!deleted) {
+        return { success: false, error: "Invitation not found" };
+      }
 
       revalidatePath(`/${workspaceSlug}/settings/members`);
       return { success: true };
@@ -226,6 +237,15 @@ export async function acceptInvitation(token: string): Promise<{
         return {
           success: false,
           error: "Invitation is not valid or has expired",
+        };
+      }
+
+      // Check if the invitation email matches the logged-in user's email
+      const sessionEmail = session.user.email?.toLowerCase();
+      if (!sessionEmail || invitation.email !== sessionEmail) {
+        return {
+          success: false,
+          error: "This invitation was sent to a different email address",
         };
       }
 
