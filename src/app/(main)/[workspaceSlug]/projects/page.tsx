@@ -2,6 +2,8 @@ import { requireWorkspaceMember, hasPermission } from "@/lib/authorization";
 import { getProjectsByWorkspace } from "@/lib/dal/project";
 import ProjectCard from "@/components/projects/project-card";
 import CreateProjectDialog from "@/components/projects/create-project-dialog";
+import { FolderKanban } from "lucide-react";
+import EmptyState from "@/components/shared/empty-state";
 import type { MemberRole } from "@/lib/authorization";
 import type { Metadata } from "next";
 
@@ -62,18 +64,17 @@ export default async function ProjectsPage({ params, searchParams }: Props) {
       </div>
 
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed rounded-lg">
-          <p className="text-lg font-medium">
-            {showArchived ? "No archived projects" : "No projects"}
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {showArchived
-              ? "Archived projects will appear here"
+        <EmptyState
+          icon={FolderKanban}
+          title={showArchived ? "No archived projects" : "No projects yet"}
+          description={
+            showArchived
+              ? "Archived projects will appear here."
               : canCreate
-                ? "Create a new project"
-                : "There are no active projects at the moment"}
-          </p>
-        </div>
+                ? "Create your first project to start adding tasks."
+                : "There are no active projects at the moment."
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
