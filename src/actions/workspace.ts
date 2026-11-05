@@ -17,8 +17,12 @@ import Task from "@/models/Task";
 import Project from "@/models/Project";
 import Activity from "@/models/Activity";
 import Notification from "@/models/Notification";
+import Invitation from "@/models/Invitation";
+import Comment from "@/models/Comment";
+import Attachment from "@/models/Attachment";
 import { Types } from "mongoose";
 import { safeAction } from "@/lib/errors";
+import { deleteTasksWithRelated } from "@/lib/cascade";
 
 interface CreateWorkspaceResult {
   success: boolean;
@@ -169,12 +173,51 @@ export async function deleteWorkspace(
         membership.workspaceId,
       );
 
+      // Get all task IDs in this workspace to cascade delete
+      const tasks = await Task.find({ workspaceId: workspaceObjectId })
+        .select("_id")
+        .lean();
+
+      const taskIds = tasks.map((t) => t._id);
+
+      // Delete related data for all tasks in workspace
+      if (taskIds.length > 0) {
+        await Promise.all([
+          Comment.deleteMany({ taskId: { $in: taskIds } }),
+          Activity.deleteMany({ taskId: { $in: taskIds } }),
+        ]);
+
+        // Get attachments to delete Cloudinary files first
+        const attachments = await Attachment.find({ taskId: { $in: taskIds } })
+          .select("publicId")
+          .lean();
+
+        if (attachments.length > 0) {
+          const { deleteFile } = await import("@/lib/cloudinary");
+          const cloudinaryResults = await Promise.allSettled(
+            attachments.map((a) => deleteFile(a.publicId)),
+          );
+
+          cloudinaryResults.forEach((result, index) => {
+            if (result.status === "rejected") {
+              console.error(
+                `Failed to delete Cloudinary file for attachment ${attachments[index]._id}:`,
+                result.reason,
+              );
+            }
+          });
+        }
+
+        await Attachment.deleteMany({ taskId: { $in: taskIds } });
+      }
+
       await Promise.all([
         Task.deleteMany({ workspaceId: workspaceObjectId }),
         Project.deleteMany({ workspaceId: workspaceObjectId }),
         WorkspaceMember.deleteMany({ workspaceId: workspaceObjectId }),
         Notification.deleteMany({ workspaceId: workspaceObjectId }),
         Activity.deleteMany({ workspaceId: workspaceObjectId }),
+        Invitation.deleteMany({ workspaceId: workspaceObjectId }),
         Workspace.findOneAndDelete({ slug: workspaceSlug }),
       ]);
 
