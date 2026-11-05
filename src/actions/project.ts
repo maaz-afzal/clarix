@@ -13,6 +13,7 @@ import {
   type UpdateProjectInput,
 } from "@/lib/validations/project";
 import mongoose from "mongoose";
+import { safeAction } from "@/lib/errors";
 
 interface ActionResult {
   success: boolean;
@@ -24,35 +25,37 @@ export async function createProject(
   workspaceSlug: string,
   data: CreateProjectInput,
 ): Promise<ActionResult> {
-  const { userId, membership } = await verifyPermission(
-    workspaceSlug,
-    "project_create",
-  );
+  return safeAction(async () => {
+    const { userId, membership } = await verifyPermission(
+      workspaceSlug,
+      "project_create",
+    );
 
-  const result = createProjectSchema.safeParse(data);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
+    const result = createProjectSchema.safeParse(data);
+    if (!result.success) {
+      return { success: false, error: result.error.errors[0].message };
+    }
 
-  try {
-    await connectDB();
+    try {
+      await connectDB();
 
-    const project = await Project.create({
-      workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
-      name: result.data.name,
-      description: result.data.description,
-      color: result.data.color,
-      createdBy: new mongoose.Types.ObjectId(userId),
-    });
+      const project = await Project.create({
+        workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+        name: result.data.name,
+        description: result.data.description,
+        color: result.data.color,
+        createdBy: new mongoose.Types.ObjectId(userId),
+      });
 
-    revalidatePath(`/${workspaceSlug}/projects`);
-    revalidatePath(`/${workspaceSlug}/dashboard`);
+      revalidatePath(`/${workspaceSlug}/projects`);
+      revalidatePath(`/${workspaceSlug}/dashboard`);
 
-    return { success: true, projectId: project._id.toString() };
-  } catch (error) {
-    console.error("Project create error:", error);
-    return { success: false, error: "Failed to create project" };
-  }
+      return { success: true, projectId: project._id.toString() };
+    } catch (error) {
+      console.error("Project create error:", error);
+      return { success: false, error: "Failed to create project" };
+    }
+  });
 }
 
 export async function updateProject(
@@ -60,143 +63,151 @@ export async function updateProject(
   projectId: string,
   data: UpdateProjectInput,
 ): Promise<ActionResult> {
-  const { membership } = await verifyPermission(
-    workspaceSlug,
-    "project_update",
-  );
-
-  const result = updateProjectSchema.safeParse(data);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  try {
-    await connectDB();
-
-    const project = await Project.findOneAndUpdate(
-      {
-        _id: new mongoose.Types.ObjectId(projectId),
-        workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
-      },
-      { $set: result.data },
-      { new: true },
+  return safeAction(async () => {
+    const { membership } = await verifyPermission(
+      workspaceSlug,
+      "project_update",
     );
 
-    if (!project) {
-      return { success: false, error: "Project not found or access denied" };
+    const result = updateProjectSchema.safeParse(data);
+    if (!result.success) {
+      return { success: false, error: result.error.errors[0].message };
     }
 
-    revalidatePath(`/${workspaceSlug}/projects`);
-    revalidatePath(`/${workspaceSlug}/projects/${projectId}`);
-    revalidatePath(`/${workspaceSlug}/dashboard`);
+    try {
+      await connectDB();
 
-    return { success: true };
-  } catch (error) {
-    console.error("Project update error:", error);
-    return { success: false, error: "Failed to update project" };
-  }
+      const project = await Project.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(projectId),
+          workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+        },
+        { $set: result.data },
+        { new: true },
+      );
+
+      if (!project) {
+        return { success: false, error: "Project not found or access denied" };
+      }
+
+      revalidatePath(`/${workspaceSlug}/projects`);
+      revalidatePath(`/${workspaceSlug}/projects/${projectId}`);
+      revalidatePath(`/${workspaceSlug}/dashboard`);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Project update error:", error);
+      return { success: false, error: "Failed to update project" };
+    }
+  });
 }
 
 export async function archiveProject(
   workspaceSlug: string,
   projectId: string,
 ): Promise<ActionResult> {
-  const { membership } = await verifyPermission(
-    workspaceSlug,
-    "project_update",
-  );
-
-  try {
-    await connectDB();
-
-    const project = await Project.findOneAndUpdate(
-      {
-        _id: new mongoose.Types.ObjectId(projectId),
-        workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
-      },
-      { status: "archived" },
-      { new: true },
+  return safeAction(async () => {
+    const { membership } = await verifyPermission(
+      workspaceSlug,
+      "project_update",
     );
 
-    if (!project) {
-      return { success: false, error: "Project not found or access denied" };
+    try {
+      await connectDB();
+
+      const project = await Project.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(projectId),
+          workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+        },
+        { status: "archived" },
+        { new: true },
+      );
+
+      if (!project) {
+        return { success: false, error: "Project not found or access denied" };
+      }
+
+      revalidatePath(`/${workspaceSlug}/projects`);
+      revalidatePath(`/${workspaceSlug}/dashboard`);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Archive error:", error);
+      return { success: false, error: "Failed to archive project" };
     }
-
-    revalidatePath(`/${workspaceSlug}/projects`);
-    revalidatePath(`/${workspaceSlug}/dashboard`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Archive error:", error);
-    return { success: false, error: "Failed to archive project" };
-  }
+  });
 }
 
 export async function restoreProject(
   workspaceSlug: string,
   projectId: string,
 ): Promise<ActionResult> {
-  const { membership } = await verifyPermission(
-    workspaceSlug,
-    "project_update",
-  );
-
-  try {
-    await connectDB();
-
-    await Project.findOneAndUpdate(
-      {
-        _id: new mongoose.Types.ObjectId(projectId),
-        workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
-      },
-      { status: "active" },
+  return safeAction(async () => {
+    const { membership } = await verifyPermission(
+      workspaceSlug,
+      "project_update",
     );
 
-    revalidatePath(`/${workspaceSlug}/projects`);
+    try {
+      await connectDB();
 
-    return { success: true };
-  } catch (error) {
-    console.error("Restore error:", error);
-    return { success: false, error: "Failed to restore project" };
-  }
+      await Project.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(projectId),
+          workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+        },
+        { status: "active" },
+      );
+
+      revalidatePath(`/${workspaceSlug}/projects`);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Restore error:", error);
+      return { success: false, error: "Failed to restore project" };
+    }
+  });
 }
 
 export async function deleteProject(
   workspaceSlug: string,
   projectId: string,
 ): Promise<ActionResult> {
-  const { membership } = await verifyPermission(
-    workspaceSlug,
-    "project_delete",
-  );
-
-  try {
-    await connectDB();
-
-    const workspaceObjectId = new mongoose.Types.ObjectId(
-      membership.workspaceId,
+  return safeAction(async () => {
+    const { membership } = await verifyPermission(
+      workspaceSlug,
+      "project_delete",
     );
-    const projectObjectId = new mongoose.Types.ObjectId(projectId);
 
-    const project = await Project.findOne({
-      _id: projectObjectId,
-      workspaceId: workspaceObjectId,
-    });
+    try {
+      await connectDB();
 
-    if (!project) {
-      return { success: false, error: "Project not found or access denied" };
+      const workspaceObjectId = new mongoose.Types.ObjectId(
+        membership.workspaceId,
+      );
+      const projectObjectId = new mongoose.Types.ObjectId(projectId);
+
+      const project = await Project.findOne({
+        _id: projectObjectId,
+        workspaceId: workspaceObjectId,
+      });
+
+      if (!project) {
+        return { success: false, error: "Project not found or access denied" };
+      }
+
+      await Task.deleteMany({ projectId: projectObjectId });
+
+      await Project.findByIdAndDelete(projectObjectId);
+
+      revalidatePath(`/${workspaceSlug}/projects`);
+      revalidatePath(`/${workspaceSlug}/dashboard`);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Delete error:", error);
+      return { success: false, error: "Failed to delete project" };
     }
-
-    await Task.deleteMany({ projectId: projectObjectId });
-
-    await Project.findByIdAndDelete(projectObjectId);
-
-    revalidatePath(`/${workspaceSlug}/projects`);
-    revalidatePath(`/${workspaceSlug}/dashboard`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Delete error:", error);
-    return { success: false, error: "Failed to delete project" };
-  }
+  });
 }
