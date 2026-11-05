@@ -8,6 +8,7 @@ import {
   updateProfileSchema,
   type UpdateProfileInput,
 } from "@/lib/validations/user";
+import { safeAction } from "@/lib/errors";
 
 interface UserActionResult {
   success: boolean;
@@ -17,26 +18,28 @@ interface UserActionResult {
 export async function updateProfile(
   input: UpdateProfileInput,
 ): Promise<UserActionResult> {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+  return safeAction(async () => {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
 
-  const result = updateProfileSchema.safeParse(input);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
+    const result = updateProfileSchema.safeParse(input);
+    if (!result.success) {
+      return { success: false, error: result.error.errors[0].message };
+    }
 
-  try {
-    await connectDB();
+    try {
+      await connectDB();
 
-    await User.findByIdAndUpdate(session.user.id, {
-      name: result.data.name,
-    });
+      await User.findByIdAndUpdate(session.user.id, {
+        name: result.data.name,
+      });
 
-    revalidatePath("/");
+      revalidatePath("/");
 
-    return { success: true };
-  } catch (error) {
-    console.error("Profile update error:", error);
-    return { success: false, error: "Failed to update profile" };
-  }
+      return { success: true };
+    } catch (error) {
+      console.error("Profile update error:", error);
+      return { success: false, error: "Failed to update profile" };
+    }
+  });
 }
