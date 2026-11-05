@@ -64,7 +64,13 @@ export async function getProjectsByWorkspace(
   });
 }
 
+import mongoose from "mongoose";
+
 export async function getProjectById(projectId: string) {
+  if (!mongoose.isValidObjectId(projectId)) {
+    return null;
+  }
+
   try {
     await connectDB();
 
