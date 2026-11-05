@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchResult } from "@/lib/dal/search";
+import EmptyState from "@/components/shared/empty-state";
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "text-slate-500",
@@ -54,12 +55,11 @@ export default function SearchResults({
 }: SearchResultsProps) {
   if (results.totalCount === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="font-medium">No results found</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Nothing found for &ldquo;{query}&rdquo;
-        </p>
-      </div>
+      <EmptyState
+        icon={Search}
+        title="No results found"
+        description={`Nothing found for &ldquo;${query}&rdquo;`}
+      />
     );
   }
 
