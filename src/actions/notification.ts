@@ -6,6 +6,7 @@ import Notification from "@/models/Notification";
 import { auth } from "@/lib/auth";
 import { verifyWorkspaceMember } from "@/lib/authorization";
 import mongoose from "mongoose";
+import { safeAction } from "@/lib/errors";
 
 interface NotificationResult {
   success: boolean;
@@ -16,57 +17,61 @@ export async function markNotificationRead(
   workspaceSlug: string,
   notificationId: string,
 ): Promise<NotificationResult> {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+  return safeAction(async () => {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
 
-  await verifyWorkspaceMember(workspaceSlug);
+    await verifyWorkspaceMember(workspaceSlug);
 
-  try {
-    await connectDB();
+    try {
+      await connectDB();
 
-    await Notification.findOneAndUpdate(
-      {
-        _id: new mongoose.Types.ObjectId(notificationId),
-        userId: new mongoose.Types.ObjectId(session.user.id),
-      },
-      { isRead: true },
-    );
+      await Notification.findOneAndUpdate(
+        {
+          _id: new mongoose.Types.ObjectId(notificationId),
+          userId: new mongoose.Types.ObjectId(session.user.id),
+        },
+        { isRead: true },
+      );
 
-    revalidatePath(`/${workspaceSlug}/notifications`);
+      revalidatePath(`/${workspaceSlug}/notifications`);
 
-    return { success: true };
-  } catch (error) {
-    console.error("Mark read error:", error);
-    return { success: false, error: "Notification cannot be marked as read" };
-  }
+      return { success: true };
+    } catch (error) {
+      console.error("Mark read error:", error);
+      return { success: false, error: "Notification cannot be marked as read" };
+    }
+  });
 }
 
 export async function markAllRead(
   workspaceSlug: string,
   workspaceId: string,
 ): Promise<NotificationResult> {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+  return safeAction(async () => {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
 
-  await verifyWorkspaceMember(workspaceSlug);
+    await verifyWorkspaceMember(workspaceSlug);
 
-  try {
-    await connectDB();
+    try {
+      await connectDB();
 
-    await Notification.updateMany(
-      {
-        userId: new mongoose.Types.ObjectId(session.user.id),
-        workspaceId: new mongoose.Types.ObjectId(workspaceId),
-        isRead: false,
-      },
-      { isRead: true },
-    );
+      await Notification.updateMany(
+        {
+          userId: new mongoose.Types.ObjectId(session.user.id),
+          workspaceId: new mongoose.Types.ObjectId(workspaceId),
+          isRead: false,
+        },
+        { isRead: true },
+      );
 
-    revalidatePath(`/${workspaceSlug}/notifications`);
+      revalidatePath(`/${workspaceSlug}/notifications`);
 
-    return { success: true };
-  } catch (error) {
-    console.error("Mark all read error:", error);
-    return { success: false, error: "Notifications cannot be marked as read" };
-  }
+      return { success: true };
+    } catch (error) {
+      console.error("Mark all read error:", error);
+      return { success: false, error: "Notifications cannot be marked as read" };
+    }
+  });
 }
