@@ -178,6 +178,10 @@ export async function getTaskStatsByWorkspace(
 }
 
 export async function getTaskById(taskId: string): Promise<TaskItem | null> {
+  if (!mongoose.isValidObjectId(taskId)) {
+    return null;
+  }
+
   try {
     await connectDB();
 
