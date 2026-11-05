@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ClipboardList } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { updateTask, deleteTask } from "@/actions/task";
@@ -10,6 +10,7 @@ import type { TaskItem } from "@/lib/dal/task";
 import type { MemberWithUser } from "@/lib/dal/members";
 import CreateTaskForm from "./create-task-form";
 import Link from "next/link";
+import EmptyState from "@/components/shared/empty-state";
 
 const STATUS_OPTIONS = ["todo", "in-progress", "in-review", "done"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "urgent"];
@@ -179,23 +180,27 @@ export default function TaskListView({
       {/* Task Table */}
       <div className="flex-1 overflow-auto">
         {tasks.length === 0 ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="text-center">
-              <p className="text-muted-foreground">
-                {hasFilters
-                  ? "Filters do not match any tasks"
-                  : "No tasks available"}
-              </p>
-              {!hasFilters && canManage && (
+          <EmptyState
+            icon={ClipboardList}
+            title={hasFilters ? "No matching tasks" : "No tasks yet"}
+            description={
+              hasFilters
+                ? "Adjust your filters to find what you're looking for."
+                : canManage
+                  ? "Create your first task to get started."
+                  : "There are no tasks in this project yet."
+            }
+            children={
+              !hasFilters && canManage && (
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  className="mt-2 text-sm text-primary hover:underline"
+                  className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
                 >
                   Create First Task
                 </button>
-              )}
-            </div>
-          </div>
+              )
+            }
+          />
         ) : (
           <table className="w-full min-w-180 text-sm">
             <thead className="border-b bg-muted/30 sticky top-0">
