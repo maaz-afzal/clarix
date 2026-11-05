@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/db";
 import Project from "@/models/Project";
 import Task from "@/models/Task";
-import Workspace from "@/models/Workspace";
 import { verifyPermission } from "@/lib/authorization";
 import {
   createProjectSchema,
@@ -152,13 +151,17 @@ export async function restoreProject(
     try {
       await connectDB();
 
-      await Project.findOneAndUpdate(
+      const updated = await Project.findOneAndUpdate(
         {
           _id: new mongoose.Types.ObjectId(projectId),
           workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
         },
         { status: "active" },
       );
+
+      if (!updated) {
+        return { success: false, error: "Project not found or access denied" };
+      }
 
       revalidatePath(`/${workspaceSlug}/projects`);
 
