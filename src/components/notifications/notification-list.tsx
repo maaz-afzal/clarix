@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { markNotificationRead, markAllRead } from "@/actions/notification";
 import type { NotificationItem } from "@/lib/dal/notifications";
+import EmptyState from "@/components/shared/empty-state";
 
 const NOTIFICATION_ICONS: Record<string, string> = {
   assignment: "📋",
@@ -47,13 +48,11 @@ export default function NotificationList({
 
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Bell className="w-10 h-10 text-muted-foreground/30 mb-3" />
-        <p className="font-medium">No notifications</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          When there's activity, it will show up here
-        </p>
-      </div>
+      <EmptyState
+        icon={Bell}
+        title="No notifications"
+        description="When there's activity, it will show up here."
+      />
     );
   }
 
