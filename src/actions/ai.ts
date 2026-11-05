@@ -11,6 +11,7 @@ import {
   generatePrioritySuggestionSchema,
 } from "@/lib/validations/ai";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { safeAction } from "@/lib/errors";
 
 interface AITextResult {
   success: boolean;
@@ -35,130 +36,134 @@ export async function generateTaskDescription(
   workspaceSlug: string,
   input: GenerateTaskDescriptionInput,
 ): Promise<AITextResult> {
-  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+  return safeAction(async () => {
+    const { userId } = await verifyWorkspaceMember(workspaceSlug);
 
-  const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
+    const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
 
-  if (!rateLimit.allowed) {
-    return {
-      success: false,
-      error: "Too many AI requests. 20 requests are allowed per hour.",
-    };
-  }
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        error: "Too many AI requests. 20 requests are allowed per hour.",
+      };
+    }
 
-  const result = generateTaskDescriptionSchema.safeParse(input);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
+    const result = generateTaskDescriptionSchema.safeParse(input);
+    if (!result.success) {
+      return { success: false, error: result.error.errors[0].message };
+    }
 
-  const { title, projectName, context } = result.data;
+    const { title, projectName, context } = result.data;
 
-  try {
-    const prompt = [
-      `Write a clear, professional task description for a software project task.`,
-      `Task title: "${title}"`,
-      projectName ? `Project: "${projectName}"` : "",
-      context ? `Additional context: "${context}"` : "",
-      ``,
-      `Requirements:`,
-      `- 2-4 sentences maximum`,
-      `- Clear and actionable`,
-      `- No bullet points`,
-      `- Focus on what needs to be done and why`,
-      `- Do not repeat the title`,
-      `- Output only the description, nothing else`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    try {
+      const prompt = [
+        `Write a clear, professional task description for a software project task.`,
+        `Task title: "${title}"`,
+        projectName ? `Project: "${projectName}"` : "",
+        context ? `Additional context: "${context}"` : "",
+        ``,
+        `Requirements:`,
+        `- 2-4 sentences maximum`,
+        `- Clear and actionable`,
+        `- No bullet points`,
+        `- Focus on what needs to be done and why`,
+        `- Do not repeat the title`,
+        `- Output only the description, nothing else`,
+      ]
+        .filter(Boolean)
+        .join("\n");
 
-    const { text } = await generateText({
-      model: geminiFlash,
-      prompt,
-      maxTokens: 200,
-      temperature: 0.7,
-    });
+      const { text } = await generateText({
+        model: geminiFlash,
+        prompt,
+        maxTokens: 200,
+        temperature: 0.7,
+      });
 
-    return { success: true, text: text.trim() };
-  } catch (error) {
-    console.error("AI description error:", error);
-    return {
-      success: false,
-      error: "AI could not generate a description. Please try again.",
-    };
-  }
+      return { success: true, text: text.trim() };
+    } catch (error) {
+      console.error("AI description error:", error);
+      return {
+        success: false,
+        error: "AI could not generate a description. Please try again.",
+      };
+    }
+  });
 }
 
 export async function generateTaskBreakdown(
   workspaceSlug: string,
   input: GenerateTaskBreakdownInput,
 ): Promise<AIBreakdownResult> {
-  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+  return safeAction(async () => {
+    const { userId } = await verifyWorkspaceMember(workspaceSlug);
 
-  const rateLimit = checkRateLimit(
-    `ai:${userId}`,
-    20,
-    60 * 60 * 1000,
-  );
+    const rateLimit = checkRateLimit(
+      `ai:${userId}`,
+      20,
+      60 * 60 * 1000,
+    );
 
-  if (!rateLimit.allowed) {
-    return {
-      success: false,
-      error: "Too many AI requests. 20 requests are allowed per hour.",
-    };
-  }
-
-  const result = generateTaskBreakdownSchema.safeParse(input);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { title, description, projectName } = result.data;
-
-  try {
-    const prompt = [
-      `Break down this software task into 3-6 specific, actionable subtasks.`,
-      `Task: "${title}"`,
-      description ? `Description: "${description}"` : "",
-      projectName ? `Project: "${projectName}"` : "",
-      ``,
-      `Rules:`,
-      `- Each subtask must be one clear action`,
-      `- Start each with a verb (Implement, Create, Add, Update, Test, etc.)`,
-      `- Be specific, not vague`,
-      `- Output ONLY a JSON array of strings, nothing else`,
-      `- Example: ["Implement X", "Create Y component", "Add Z validation"]`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const { text } = await generateText({
-      model: geminiFlash,
-      prompt,
-      maxTokens: 400,
-      temperature: 0.5,
-    });
-
-    const cleaned = text
-      .trim()
-      .replace(/```json|```/g, "")
-      .trim();
-    const subtasks = JSON.parse(cleaned) as string[];
-
-    if (!Array.isArray(subtasks)) {
-      return { success: false, error: "AI did not return the correct format" };
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        error: "Too many AI requests. 20 requests are allowed per hour.",
+      };
     }
 
-    return {
-      success: true,
-      subtasks: subtasks.slice(0, 6).filter((s) => typeof s === "string"),
-    };
-  } catch (error) {
-    console.error("AI breakdown error:", error);
-    return {
-      success: false,
-      error: "AI could not generate the breakdown.",
-    };
-  }
+    const result = generateTaskBreakdownSchema.safeParse(input);
+    if (!result.success) {
+      return { success: false, error: result.error.errors[0].message };
+    }
+
+    const { title, description, projectName } = result.data;
+
+    try {
+      const prompt = [
+        `Break down this software task into 3-6 specific, actionable subtasks.`,
+        `Task: "${title}"`,
+        description ? `Description: "${description}"` : "",
+        projectName ? `Project: "${projectName}"` : "",
+        ``,
+        `Rules:`,
+        `- Each subtask must be one clear action`,
+        `- Start each with a verb (Implement, Create, Add, Update, Test, etc.)`,
+        `- Be specific, not vague`,
+        `- Output ONLY a JSON array of strings, nothing else`,
+        `- Example: ["Implement X", "Create Y component", "Add Z validation"]`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const { text } = await generateText({
+        model: geminiFlash,
+        prompt,
+        maxTokens: 400,
+        temperature: 0.5,
+      });
+
+      const cleaned = text
+        .trim()
+        .replace(/```json|```/g, "")
+        .trim();
+      const subtasks = JSON.parse(cleaned) as string[];
+
+      if (!Array.isArray(subtasks)) {
+        return { success: false, error: "AI did not return the correct format" };
+      }
+
+      return {
+        success: true,
+        subtasks: subtasks.slice(0, 6).filter((s) => typeof s === "string"),
+      };
+    } catch (error) {
+      console.error("AI breakdown error:", error);
+      return {
+        success: false,
+        error: "AI could not generate the breakdown.",
+      };
+    }
+  });
 }
 
 export async function generateProjectSummary(
@@ -173,121 +178,125 @@ export async function generateProjectSummary(
     overdue: number;
   },
 ): Promise<AITextResult> {
-  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+  return safeAction(async () => {
+    const { userId } = await verifyWorkspaceMember(workspaceSlug);
 
-  const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
+    const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
 
-  if (!rateLimit.allowed) {
-    return {
-      success: false,
-      error: "Too many AI requests. 20 requests are allowed per hour.",
-    };
-  }
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        error: "Too many AI requests. 20 requests are allowed per hour.",
+      };
+    }
 
-  if (!projectName || stats.total === 0) {
-    return {
-      success: false,
-      error: "Project mein tasks hone chahiye summary ke liye",
-    };
-  }
+    if (!projectName || stats.total === 0) {
+      return {
+        success: false,
+        error: "Project mein tasks hone chahiye summary ke liye",
+      };
+    }
 
-  try {
-    const completionRate = Math.round((stats.done / stats.total) * 100);
+    try {
+      const completionRate = Math.round((stats.done / stats.total) * 100);
 
-    const prompt = [
-      `Write a brief, professional project status summary (2-3 sentences).`,
-      `Project: "${projectName}"`,
-      `Stats:`,
-      `- Total tasks: ${stats.total}`,
-      `- Completion rate: ${completionRate}%`,
-      `- In progress: ${stats.inProgress}`,
-      `- In review: ${stats.inReview}`,
-      `- Overdue: ${stats.overdue}`,
-      ``,
-      `Be honest about the status. If overdue tasks exist, mention it.`,
-      `Output only the summary, no labels or headers.`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+      const prompt = [
+        `Write a brief, professional project status summary (2-3 sentences).`,
+        `Project: "${projectName}"`,
+        `Stats:`,
+        `- Total tasks: ${stats.total}`,
+        `- Completion rate: ${completionRate}%`,
+        `- In progress: ${stats.inProgress}`,
+        `- In review: ${stats.inReview}`,
+        `- Overdue: ${stats.overdue}`,
+        ``,
+        `Be honest about the status. If overdue tasks exist, mention it.`,
+        `Output only the summary, no labels or headers.`,
+      ]
+        .filter(Boolean)
+        .join("\n");
 
-    const { text } = await generateText({
-      model: geminiFlash,
-      prompt,
-      maxTokens: 150,
-      temperature: 0.6,
-    });
+      const { text } = await generateText({
+        model: geminiFlash,
+        prompt,
+        maxTokens: 150,
+        temperature: 0.6,
+      });
 
-    return { success: true, text: text.trim() };
-  } catch (error) {
-    console.error("AI summary error:", error);
-    return { success: false, error: "Could not generate summary" };
-  }
+      return { success: true, text: text.trim() };
+    } catch (error) {
+      console.error("AI summary error:", error);
+      return { success: false, error: "Could not generate summary" };
+    }
+  });
 }
 
 export async function generatePrioritySuggestion(
   workspaceSlug: string,
   input: { title: string; description?: string },
 ): Promise<AIPriorityResult> {
-  const { userId } = await verifyWorkspaceMember(workspaceSlug);
+  return safeAction(async () => {
+    const { userId } = await verifyWorkspaceMember(workspaceSlug);
 
-  const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
+    const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
 
-  if (!rateLimit.allowed) {
-    return {
-      success: false,
-      error: "Too many AI requests. 20 requests are allowed per hour.",
-    };
-  }
-  const result = generatePrioritySuggestionSchema.safeParse(input);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { title, description } = result.data;
-
-  try {
-    const prompt = [
-      `Analyze this software task and suggest the appropriate priority level.`,
-      `Task: "${title}"`,
-      description ? `Description: "${description}"` : "",
-      ``,
-      `Priority levels:`,
-      `- low: Nice to have, no deadline pressure`,
-      `- medium: Normal importance, standard timeline`,
-      `- high: Important, should be done soon`,
-      `- urgent: Critical, needs immediate attention`,
-      ``,
-      `Respond with JSON only:`,
-      `{"priority": "low|medium|high|urgent", "reason": "one sentence explanation"}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const { text } = await generateText({
-      model: geminiFlash,
-      prompt,
-      maxTokens: 100,
-      temperature: 0.3,
-    });
-
-    const cleaned = text
-      .trim()
-      .replace(/```json|```/g, "")
-      .trim();
-    const parsed = JSON.parse(cleaned) as { priority: string; reason: string };
-
-    const validPriorities = ["low", "medium", "high", "urgent"];
-    if (!validPriorities.includes(parsed.priority)) {
-      return { success: false, error: "Invalid priority level" };
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        error: "Too many AI requests. 20 requests are allowed per hour.",
+      };
+    }
+    const result = generatePrioritySuggestionSchema.safeParse(input);
+    if (!result.success) {
+      return { success: false, error: result.error.errors[0].message };
     }
 
-    return {
-      success: true,
-      priority: parsed.priority,
-      reason: parsed.reason,
-    };
-  } catch (error) {
-    console.error("Priority suggestion error:", error);
-    return { success: false, error: "Suggestion could not be generated" };
-  }
+    const { title, description } = result.data;
+
+    try {
+      const prompt = [
+        `Analyze this software task and suggest the appropriate priority level.`,
+        `Task: "${title}"`,
+        description ? `Description: "${description}"` : "",
+        ``,
+        `Priority levels:`,
+        `- low: Nice to have, no deadline pressure`,
+        `- medium: Normal importance, standard timeline`,
+        `- high: Important, should be done soon`,
+        `- urgent: Critical, needs immediate attention`,
+        ``,
+        `Respond with JSON only:`,
+        `{"priority": "low|medium|high|urgent", "reason": "one sentence explanation"}`,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const { text } = await generateText({
+        model: geminiFlash,
+        prompt,
+        maxTokens: 100,
+        temperature: 0.3,
+      });
+
+      const cleaned = text
+        .trim()
+        .replace(/```json|```/g, "")
+        .trim();
+      const parsed = JSON.parse(cleaned) as { priority: string; reason: string };
+
+      const validPriorities = ["low", "medium", "high", "urgent"];
+      if (!validPriorities.includes(parsed.priority)) {
+        return { success: false, error: "Invalid priority level" };
+      }
+
+      return {
+        success: true,
+        priority: parsed.priority,
+        reason: parsed.reason,
+      };
+    } catch (error) {
+      console.error("Priority suggestion error:", error);
+      return { success: false, error: "Suggestion could not be generated" };
+    }
+  });
 }
