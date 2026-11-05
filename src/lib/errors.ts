@@ -1,12 +1,12 @@
 import { unstable_rethrow } from "next/navigation"
 
 export const ERROR_MESSAGES = {
-  UNAUTHENTICATED: "Login required",
+  UNAUTHENTICATED: "Please log in to continue",
   UNAUTHORIZED: "You do not have access to this workspace",
-  FORBIDDEN: "You are not allowed to perform this action",
+  FORBIDDEN: "You do not have permission to do this",
   NOT_FOUND: "Resource not found",
   INTERNAL: "Something went wrong. Please try again.",
-  VALIDATION: "Input is invalid",
+  VALIDATION: "Invalid input",
   RATE_LIMITED: "Too many requests. Please try again later.",
 } as const
 
