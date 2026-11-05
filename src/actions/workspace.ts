@@ -1,6 +1,6 @@
 "use server";
 
-  import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/db";
 import Workspace from "@/models/Workspace";
@@ -18,6 +18,7 @@ import Project from "@/models/Project";
 import Activity from "@/models/Activity";
 import Notification from "@/models/Notification";
 import { Types } from "mongoose";
+import { safeAction } from "@/lib/errors";
 
 interface CreateWorkspaceResult {
   success: boolean;
@@ -33,148 +34,154 @@ interface UpdateWorkspaceResult {
 export async function createWorkspace(
   input: CreateWorkspaceInput,
 ): Promise<CreateWorkspaceResult> {
-  const user = await requireAuth();
-  const result = createWorkspaceSchema.safeParse(input);
+  return safeAction(async () => {
+    const user = await requireAuth();
+    const result = createWorkspaceSchema.safeParse(input);
 
-  if (!result.success) {
-    return {
-      success: false,
-      error: result.error.errors[0].message,
-    };
-  }
-
-  const { name } = result.data;
-
-  try {
-    await connectDB();
-
-    let slug = generateSlug(name);
-    let slugExists = await Workspace.findOne({ slug });
-    let attempt = 0;
-
-    while (slugExists && attempt < 10) {
-      attempt++;
-      slug = `${generateSlug(name)}-${attempt}`;
-      slugExists = await Workspace.findOne({ slug });
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error.errors[0].message,
+      };
     }
 
-    const workspace = await Workspace.create({
-      name,
-      slug,
-      ownerId: user.id,
-    });
+    const { name } = result.data;
 
-    await WorkspaceMember.create({
-      workspaceId: workspace._id,
-      userId: user.id,
-      role: "owner",
-    });
+    try {
+      await connectDB();
 
-    return { success: true, slug: workspace.slug };
-  } catch (error) {
-    console.error("Workspace create error:", error);
-    return {
-      success: false,
-      error: "Could not create workspace. Please try again.",
-    };
-  }
+      let slug = generateSlug(name);
+      let slugExists = await Workspace.findOne({ slug });
+      let attempt = 0;
+
+      while (slugExists && attempt < 10) {
+        attempt++;
+        slug = `${generateSlug(name)}-${attempt}`;
+        slugExists = await Workspace.findOne({ slug });
+      }
+
+      const workspace = await Workspace.create({
+        name,
+        slug,
+        ownerId: user.id,
+      });
+
+      await WorkspaceMember.create({
+        workspaceId: workspace._id,
+        userId: user.id,
+        role: "owner",
+      });
+
+      return { success: true, slug: workspace.slug };
+    } catch (error) {
+      console.error("Workspace create error:", error);
+      return {
+        success: false,
+        error: "Could not create workspace. Please try again.",
+      };
+    }
+  });
 }
 
 export async function updateWorkspace(
   workspaceSlug: string,
   input: UpdateWorkspaceInput,
 ): Promise<UpdateWorkspaceResult> {
-  await verifyPermission(workspaceSlug, "workspace_update");
+  return safeAction(async () => {
+    await verifyPermission(workspaceSlug, "workspace_update");
 
-  const { name, description } = input;
+    const { name, description } = input;
 
-  const result = updateWorkspaceSchema.safeParse({
-    name: name !== null ? name : undefined,
-    description: description !== null ? description : undefined,
-  });
+    const result = updateWorkspaceSchema.safeParse({
+      name: name !== null ? name : undefined,
+      description: description !== null ? description : undefined,
+    });
 
-  if (!result.success) {
-    return {
-      success: false,
-      error: result.error.errors[0].message,
-    };
-  }
-
-  const updateData: {
-    name?: string;
-    description?: string;
-  } = {};
-
-  if (result.data.name !== undefined) updateData.name = result.data.name;
-
-  if (result.data.description !== undefined)
-    updateData.description = result.data.description;
-
-  try {
-    await connectDB();
-
-    const workspace = await Workspace.findOneAndUpdate(
-      { slug: workspaceSlug },
-      { $set: updateData },
-      { new: true },
-    );
-
-    if (!workspace) {
+    if (!result.success) {
       return {
         success: false,
-        error: "Workspace not found.",
+        error: result.error.errors[0].message,
       };
     }
 
-    revalidatePath(`/${workspaceSlug}`, "layout");
+    const updateData: {
+      name?: string;
+      description?: string;
+    } = {};
 
-    return {
-      success: true,
-    };
-  } catch (error) {
-    console.error("Workspace update error:", error);
+    if (result.data.name !== undefined) updateData.name = result.data.name;
 
-    return {
-      success: false,
-      error: "Could not update workspace. Please try again.",
-    };
-  }
+    if (result.data.description !== undefined)
+      updateData.description = result.data.description;
+
+    try {
+      await connectDB();
+
+      const workspace = await Workspace.findOneAndUpdate(
+        { slug: workspaceSlug },
+        { $set: updateData },
+        { new: true },
+      );
+
+      if (!workspace) {
+        return {
+          success: false,
+          error: "Workspace not found.",
+        };
+      }
+
+      revalidatePath(`/${workspaceSlug}`, "layout");
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error("Workspace update error:", error);
+
+      return {
+        success: false,
+        error: "Could not update workspace. Please try again.",
+      };
+    }
+  });
 }
 
 export async function deleteWorkspace(
   workspaceSlug: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const { userId, membership } = await verifyPermission(
-    workspaceSlug,
-    "workspace_delete",
-  );
-
-  if (membership.role !== "owner") {
-    return {
-      success: false,
-      error: "Only the workspace owner can delete it",
-    };
-  }
-
-  try {
-    await connectDB();
-
-    const workspaceObjectId = new Types.ObjectId(
-      membership.workspaceId,
+  return safeAction(async () => {
+    const { userId, membership } = await verifyPermission(
+      workspaceSlug,
+      "workspace_delete",
     );
 
-    await Promise.all([
-      Task.deleteMany({ workspaceId: workspaceObjectId }),
-      Project.deleteMany({ workspaceId: workspaceObjectId }),
-      WorkspaceMember.deleteMany({ workspaceId: workspaceObjectId }),
-      Notification.deleteMany({ workspaceId: workspaceObjectId }),
-      Activity.deleteMany({ workspaceId: workspaceObjectId }),
-      Workspace.findOneAndDelete({ slug: workspaceSlug }),
-    ]);
+    if (membership.role !== "owner") {
+      return {
+        success: false,
+        error: "Only the workspace owner can delete it",
+      };
+    }
 
-    return { success: true };
-  } catch (error) {
-    console.error("Delete workspace error:", error);
-    return { success: false, error: "Failed to delete workspace" };
-  }
+    try {
+      await connectDB();
+
+      const workspaceObjectId = new Types.ObjectId(
+        membership.workspaceId,
+      );
+
+      await Promise.all([
+        Task.deleteMany({ workspaceId: workspaceObjectId }),
+        Project.deleteMany({ workspaceId: workspaceObjectId }),
+        WorkspaceMember.deleteMany({ workspaceId: workspaceObjectId }),
+        Notification.deleteMany({ workspaceId: workspaceObjectId }),
+        Activity.deleteMany({ workspaceId: workspaceObjectId }),
+        Workspace.findOneAndDelete({ slug: workspaceSlug }),
+      ]);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Delete workspace error:", error);
+      return { success: false, error: "Failed to delete workspace" };
+    }
+  });
 }
