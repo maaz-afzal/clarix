@@ -9,6 +9,7 @@ import {
   cancelInvitation,
 } from "@/actions/members";
 import type { MemberWithUser, PendingInvitation } from "@/lib/dal/members";
+import { notifyResult } from "@/lib/notify";
 
 interface MembersListProps {
   workspaceSlug: string;
@@ -42,8 +43,7 @@ function MemberRow({
     if (!confirm(`Remove ${member.user.name}?`)) return;
     startTransition(async () => {
       const result = await removeMember(workspaceSlug, member.userId);
-      if (!result.success) toast.error(result.error || "Could not remove member");
-      else toast.success("Member removed");
+      notifyResult(result, "Member removed");
     });
   }
 
@@ -54,9 +54,7 @@ function MemberRow({
         member.userId,
         newRole,
       );
-      if (!result.success)
-        toast.error(result.error || "Could not update role");
-      else toast.success("Role updated");
+      notifyResult(result, "Role updated");
     });
   }
 
@@ -129,8 +127,7 @@ export default function MembersList({
   function handleCancelInvitation(invitationId: string) {
     startTransition(async () => {
       const result = await cancelInvitation(workspaceSlug, invitationId);
-      if (!result.success) toast.error(result.error || "Could not cancel invitation");
-      else toast.success("Invitation canceled");
+      notifyResult(result, "Invitation canceled");
     });
   }
 
