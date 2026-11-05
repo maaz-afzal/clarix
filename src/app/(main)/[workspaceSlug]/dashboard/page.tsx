@@ -12,6 +12,7 @@ import ProjectProgressList from "@/components/dashboard/project-progress";
 import OverdueTasks from "@/components/dashboard/overdue-tasks";
 import ActivityFeed from "@/components/dashboard/activity-feed";
 import MyTasks from "@/components/dashboard/my-tasks";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -67,7 +68,7 @@ function StatsSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-28 bg-muted animate-pulse rounded-lg" />
+        <Skeleton key={i} className="h-28 w-full rounded-lg" />
       ))}
     </div>
   );
@@ -77,7 +78,7 @@ function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-12 bg-muted animate-pulse rounded-md" />
+        <Skeleton key={i} className="h-12 w-full rounded-md" />
       ))}
     </div>
   );
