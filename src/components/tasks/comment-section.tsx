@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, Trash2 } from "lucide-react";
+import { Send, Trash2, MessageSquare } from "lucide-react";
 import toast from "react-hot-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import { addComment, deleteComment } from "@/actions/comment";
@@ -12,6 +12,7 @@ import {
   type CreateCommentInput,
 } from "@/lib/validations/task";
 import type { CommentItem } from "@/lib/dal/comments";
+import EmptyState from "@/components/shared/empty-state";
 
 interface CommentSectionProps {
   comments: CommentItem[];
@@ -80,7 +81,11 @@ export default function CommentSection({
       {/* Comments list */}
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No comments yet.</p>
+          <EmptyState
+            icon={MessageSquare}
+            title="No comments yet"
+            description="Be the first to add a comment."
+          />
         ) : (
           comments.map((comment) => {
             const isAuthor = comment.author._id === currentUserId;
