@@ -10,7 +10,6 @@ import {
   Trash2,
   RotateCcw,
 } from "lucide-react";
-import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
 import {
   archiveProject,
@@ -18,6 +17,7 @@ import {
   restoreProject,
 } from "@/actions/project";
 import EditProjectDialog from "./edit-project-dialog";
+import { notifyResult } from "@/lib/notify";
 
 interface ProjectCardProps {
   project: {
@@ -50,8 +50,7 @@ export default function ProjectCard({
     setMenuOpen(false);
     startTransition(async () => {
       const result = await archiveProject(workspaceSlug, project._id);
-      if (!result.success) toast.error(result.error || "Failed to archive project");
-      else toast.success("Project archived");
+      notifyResult(result, "Project archived");
     });
   }
 
@@ -59,8 +58,7 @@ export default function ProjectCard({
     setMenuOpen(false);
     startTransition(async () => {
       const result = await restoreProject(workspaceSlug, project._id);
-      if (!result.success) toast.error(result.error || "Failed to restore project");
-      else toast.success("Project restored");
+      notifyResult(result, "Project restored");
     });
   }
 
@@ -75,8 +73,7 @@ export default function ProjectCard({
 
     startTransition(async () => {
       const result = await deleteProject(workspaceSlug, project._id);
-      if (!result.success) toast.error(result.error || "Failed to delete project");
-      else toast.success("Project deleted");
+      notifyResult(result, "Project deleted");
     });
   }
 
