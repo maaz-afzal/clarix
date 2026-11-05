@@ -13,6 +13,7 @@ import {
 } from "@/lib/validations/project";
 import mongoose from "mongoose";
 import { safeAction } from "@/lib/errors";
+import { deleteTasksWithRelated } from "@/lib/cascade";
 
 interface ActionResult {
   success: boolean;
@@ -200,7 +201,7 @@ export async function deleteProject(
         return { success: false, error: "Project not found or access denied" };
       }
 
-      await Task.deleteMany({ projectId: projectObjectId });
+      await deleteTasksWithRelated({ projectId: projectObjectId });
 
       await Project.findByIdAndDelete(projectObjectId);
 
