@@ -13,6 +13,7 @@ import {
 } from "@/lib/validations/task";
 import type { CommentItem } from "@/lib/dal/comments";
 import EmptyState from "@/components/shared/empty-state";
+import UserAvatar from "@/components/shared/user-avatar";
 
 interface CommentSectionProps {
   comments: CommentItem[];
@@ -95,19 +96,11 @@ export default function CommentSection({
             return (
               <div key={comment._id} className="flex gap-3">
                 {/* Avatar */}
-                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
-                  {comment.author.image ? (
-                    <img
-                      src={comment.author.image}
-                      alt={comment.author.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-semibold text-primary">
-                      {comment.author.name[0].toUpperCase()}
-                    </span>
-                  )}
-                </div>
+                <UserAvatar
+                  name={comment.author.name}
+                  image={comment.author.image}
+                  size={28}
+                />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
@@ -142,19 +135,7 @@ export default function CommentSection({
 
       {/* Add comment form */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex gap-3">
-        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden mt-1">
-          {currentUserImage ? (
-            <img
-              src={currentUserImage}
-              alt={currentUserName}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-xs font-semibold text-primary">
-              {currentUserName[0].toUpperCase()}
-            </span>
-          )}
-        </div>
+        <UserAvatar name={currentUserName} image={currentUserImage} size={28} />
 
         <div className="flex-1 space-y-1">
           <textarea

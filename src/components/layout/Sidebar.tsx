@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import LogoutButton from "../auth/logout-button";
 import WorkspaceSwitcher from "@/components/layout/workspace-switcher";
 import ThemeToggle from "@/components/layout/theme-toggle";
+import UserAvatar from "@/components/shared/user-avatar";
 
 interface SidebarProps {
   workspaceSlug: string;
@@ -218,19 +219,7 @@ export default function Sidebar({
               isCollapsed ? "justify-center" : "gap-3",
             )}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-primary/10">
-              {user.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-xs font-semibold tracking-wide text-primary">
-                  {user.name.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-            </div>
+            <UserAvatar name={user.name} image={user.image} size={36} />
 
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
