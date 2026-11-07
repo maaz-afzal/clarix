@@ -10,6 +10,7 @@ import {
 } from "@/actions/members";
 import type { MemberWithUser, PendingInvitation } from "@/lib/dal/members";
 import { notifyResult } from "@/lib/notify";
+import UserAvatar from "@/components/shared/user-avatar";
 
 interface MembersListProps {
   workspaceSlug: string;
@@ -61,19 +62,7 @@ function MemberRow({
   return (
     <div className="flex items-center gap-3 py-3 border-b last:border-0">
       {/* Avatar */}
-      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-        {member.user.image ? (
-          <img
-            src={member.user.image}
-            alt={member.user.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="text-xs font-semibold text-primary">
-            {member.user.name.slice(0, 2).toUpperCase()}
-          </span>
-        )}
-      </div>
+      <UserAvatar name={member.user.name} image={member.user.image} size={32} />
 
       {/* Info */}
       <div className="flex-1 min-w-0">
