@@ -10,6 +10,7 @@ import {
   updateProfileSchema,
   type UpdateProfileInput,
 } from "@/lib/validations/user";
+import UserAvatar from "@/components/shared/user-avatar";
 
 interface ProfileFormProps {
   user: {
@@ -17,15 +18,6 @@ interface ProfileFormProps {
     email: string;
     image?: string;
   };
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 export default function ProfileForm({ user }: ProfileFormProps) {
@@ -59,19 +51,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     <div className="space-y-6">
       {/* Avatar */}
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-border">
-          {user.image ? (
-            <img
-              src={user.image}
-              alt={user.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-xl font-bold text-primary">
-              {getInitials(user.name)}
-            </span>
-          )}
-        </div>
+        <UserAvatar name={user.name} image={user.image} size={64} />
         <div>
           <p className="font-medium">{user.name}</p>
           <p className="text-sm text-muted-foreground">{user.email}</p>
