@@ -51,7 +51,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     <div className="space-y-6">
       {/* Avatar */}
       <div className="flex items-center gap-4">
-        <UserAvatar name={user.name} image={user.image} size={64} />
+        <UserAvatar name={user.name} image={user.image} size={64} decorative />
         <div>
           <p className="font-medium">{user.name}</p>
           <p className="text-sm text-muted-foreground">{user.email}</p>

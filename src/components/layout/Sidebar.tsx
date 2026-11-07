@@ -219,7 +219,7 @@ export default function Sidebar({
               isCollapsed ? "justify-center" : "gap-3",
             )}
           >
-            <UserAvatar name={user.name} image={user.image} size={36} />
+            <UserAvatar name={user.name} image={user.image} size={36} decorative />
 
             {!isCollapsed && (
               <div className="min-w-0 flex-1">

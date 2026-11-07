@@ -62,7 +62,7 @@ function MemberRow({
   return (
     <div className="flex items-center gap-3 py-3 border-b last:border-0">
       {/* Avatar */}
-      <UserAvatar name={member.user.name} image={member.user.image} size={32} />
+      <UserAvatar name={member.user.name} image={member.user.image} size={32} decorative />
 
       {/* Info */}
       <div className="flex-1 min-w-0">

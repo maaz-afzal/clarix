@@ -38,7 +38,7 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
     <div className="space-y-3">
       {activities.map((activity) => (
         <div key={activity._id} className="flex gap-3">
-          <UserAvatar name={activity.user.name} image={activity.user.image} size={28} />
+          <UserAvatar name={activity.user.name} image={activity.user.image} size={28} decorative />
           <div className="flex-1 min-w-0">
             <p className="text-sm">
               <span className="font-medium">{activity.user.name}</span>{" "}

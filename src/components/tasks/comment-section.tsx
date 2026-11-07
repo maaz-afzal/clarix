@@ -100,6 +100,7 @@ export default function CommentSection({
                   name={comment.author.name}
                   image={comment.author.image}
                   size={28}
+                  decorative
                 />
 
                 {/* Content */}

@@ -284,7 +284,7 @@ export default function TaskListView({
                     <td className="px-4 py-3">
                       {task.assignee ? (
                         <div className="flex items-center gap-2">
-                          <UserAvatar name={task.assignee.name} image={task.assignee.image} size={20} />
+                          <UserAvatar name={task.assignee.name} image={task.assignee.image} size={20} decorative />
                           <span className="text-xs text-muted-foreground">
                             {task.assignee.name}
                           </span>
