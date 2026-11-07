@@ -4,7 +4,7 @@ import Workspace from "@/models/Workspace";
 import WorkspaceMember from "@/models/WorkspaceMember";
 import mongoose from "mongoose";
 
-export async function getWorkspaceBySlug(slug: string) {
+export const getWorkspaceBySlug = cache(async (slug: string) => {
   try {
     await connectDB();
     const workspace = await Workspace.findOne({ slug }).lean();
@@ -19,9 +19,9 @@ export async function getWorkspaceBySlug(slug: string) {
     };
   } catch (error) {
     console.error("Failed to fetch workspace:", error);
-    throw new Error("Workspace load nahi ho saka");
+    throw new Error("Failed to load workspace");
   }
-}
+});
 
 export const getWorkspaceMembership = cache(
   async (workspaceSlug: string, userId: string) => {
@@ -47,7 +47,7 @@ export const getWorkspaceMembership = cache(
       };
     } catch (error) {
       console.error("Failed to fetch workspace membership:", error);
-      throw new Error("Membership check nahi ho saka");
+      throw new Error("Membership check failed");
     }
   }
 );
@@ -80,6 +80,6 @@ export async function getWorkspacesByUser(userId: string) {
     });
   } catch (error) {
     console.error("Failed to fetch user workspaces:", error);
-    throw new Error("Workspaces load nahi ho sake");
+    throw new Error("Failed to load workspaces");
   }
 }
