@@ -1,3 +1,4 @@
+import { cache } from "react";
 import connectDB from "@/lib/db";
 import Task from "@/models/Task";
 import User from "@/models/User";
@@ -177,7 +178,7 @@ export async function getTaskStatsByWorkspace(
   }
 }
 
-export async function getTaskById(taskId: string): Promise<TaskItem | null> {
+export const getTaskById = cache(async (taskId: string): Promise<TaskItem | null> => {
   if (!mongoose.isValidObjectId(taskId)) {
     return null;
   }
@@ -229,4 +230,4 @@ export async function getTaskById(taskId: string): Promise<TaskItem | null> {
     console.error("Failed to fetch task:", error);
     return null;
   }
-}
+});

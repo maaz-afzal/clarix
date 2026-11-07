@@ -1,3 +1,4 @@
+import { cache } from "react";
 import connectDB from "@/lib/db";
 import Workspace from "@/models/Workspace";
 import WorkspaceMember from "@/models/WorkspaceMember";
@@ -22,35 +23,34 @@ export async function getWorkspaceBySlug(slug: string) {
   }
 }
 
-export async function getWorkspaceMembership(
-  workspaceSlug: string,
-  userId: string,
-) {
-  try {
-    await connectDB();
+export const getWorkspaceMembership = cache(
+  async (workspaceSlug: string, userId: string) => {
+    try {
+      await connectDB();
 
-    const workspace = await Workspace.findOne({ slug: workspaceSlug }).lean();
-    if (!workspace) return null;
+      const workspace = await Workspace.findOne({ slug: workspaceSlug }).lean();
+      if (!workspace) return null;
 
-    const membership = await WorkspaceMember.findOne({
-      workspaceId: workspace._id,
-      userId: new mongoose.Types.ObjectId(userId),
-    }).lean();
+      const membership = await WorkspaceMember.findOne({
+        workspaceId: workspace._id,
+        userId: new mongoose.Types.ObjectId(userId),
+      }).lean();
 
-    if (!membership) return null;
+      if (!membership) return null;
 
-    return {
-      workspaceId: workspace._id.toString(),
-      workspaceName: workspace.name,
-      workspaceSlug: workspace.slug,
-      userId: membership.userId.toString(),
-      role: membership.role,
-    };
-  } catch (error) {
-    console.error("Failed to fetch workspace membership:", error);
-    throw new Error("Membership check nahi ho saka");
+      return {
+        workspaceId: workspace._id.toString(),
+        workspaceName: workspace.name,
+        workspaceSlug: workspace.slug,
+        userId: membership.userId.toString(),
+        role: membership.role,
+      };
+    } catch (error) {
+      console.error("Failed to fetch workspace membership:", error);
+      throw new Error("Membership check nahi ho saka");
+    }
   }
-}
+);
 
 export async function getWorkspacesByUser(userId: string) {
   try {

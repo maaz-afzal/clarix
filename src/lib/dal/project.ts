@@ -1,6 +1,8 @@
+import { cache } from "react";
 import connectDB from "@/lib/db";
 import Project from "@/models/Project";
 import Task from "@/models/Task";
+import mongoose from "mongoose";
 
 export interface ProjectWithStats {
   _id: string;
@@ -64,9 +66,7 @@ export async function getProjectsByWorkspace(
   });
 }
 
-import mongoose from "mongoose";
-
-export async function getProjectById(projectId: string) {
+export const getProjectById = cache(async (projectId: string) => {
   if (!mongoose.isValidObjectId(projectId)) {
     return null;
   }
@@ -91,7 +91,7 @@ export async function getProjectById(projectId: string) {
     console.error("Failed to fetch project:", error);
     throw new Error("Failed to fetch project");
   }
-}
+});
 
 export async function getProjectsForNav(
   workspaceId: string,

@@ -3,6 +3,7 @@ import { getWorkspaceMembership } from "@/lib/dal/workspace";
 import Task from "@/models/Task";
 import { redirect } from "next/navigation";
 import connectDB from "@/lib/db";
+import { cache } from "react";
 
 export type MemberRole = "owner" | "admin" | "member";
 
@@ -33,13 +34,13 @@ export function hasPermission(
   return (PERMISSIONS[permission] as readonly string[]).includes(role);
 }
 
-export async function requireAuth() {
+export const requireAuth = cache(async () => {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
   return session.user;
-}
+});
 
 export async function requireWorkspaceMember(workspaceSlug: string) {
   const user = await requireAuth();
