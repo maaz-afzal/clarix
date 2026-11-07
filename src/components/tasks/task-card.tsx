@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { deleteTask } from "@/actions/task";
 import type { TaskItem } from "@/lib/dal/task";
+import UserAvatar from "@/components/shared/user-avatar";
 
 const PRIORITY_CONFIG = {
   low: { label: "Low", color: "text-slate-500" },
@@ -177,22 +178,7 @@ export default function TaskCard({
 
         {/* Assignee */}
         {task.assignee && (
-          <div
-            className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0"
-            title={task.assignee.name}
-          >
-            {task.assignee.image ? (
-              <img
-                src={task.assignee.image}
-                alt={task.assignee.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold text-primary">
-                {task.assignee.name.slice(0, 1).toUpperCase()}
-              </span>
-            )}
-          </div>
+          <UserAvatar name={task.assignee.name} image={task.assignee.image} size={20} />
         )}
       </div>
     </div>
