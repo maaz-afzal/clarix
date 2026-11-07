@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { File, Image, Trash2, ExternalLink } from "lucide-react";
+import NextImage from "next/image";
 import toast from "react-hot-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import { deleteAttachment } from "@/actions/attachment";
@@ -85,9 +86,11 @@ export default function AttachmentsSection({
               <div className="shrink-0">
                 {isImage(attachment.format) ? (
                   <div className="w-8 h-8 rounded overflow-hidden border">
-                    <img
+                    <NextImage
                       src={attachment.url}
                       alt={attachment.fileName}
+                      width={32}
+                      height={32}
                       className="w-full h-full object-cover"
                     />
                   </div>
