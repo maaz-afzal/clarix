@@ -1,5 +1,6 @@
 import { formatRelativeTime } from "@/lib/utils";
 import type { RecentActivityItem } from "@/lib/dal/dashboard";
+import UserAvatar from "@/components/shared/user-avatar";
 
 function getActivityText(
   action: string,
@@ -37,19 +38,7 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
     <div className="space-y-3">
       {activities.map((activity) => (
         <div key={activity._id} className="flex gap-3">
-          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
-            {activity.user.image ? (
-              <img
-                src={activity.user.image}
-                alt={activity.user.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold text-primary">
-                {activity.user.name[0]?.toUpperCase()}
-              </span>
-            )}
-          </div>
+          <UserAvatar name={activity.user.name} image={activity.user.image} size={28} />
           <div className="flex-1 min-w-0">
             <p className="text-sm">
               <span className="font-medium">{activity.user.name}</span>{" "}
