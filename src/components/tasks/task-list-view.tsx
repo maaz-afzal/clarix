@@ -11,6 +11,7 @@ import type { MemberWithUser } from "@/lib/dal/members";
 import CreateTaskForm from "./create-task-form";
 import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
+import UserAvatar from "@/components/shared/user-avatar";
 
 const STATUS_OPTIONS = ["todo", "in-progress", "in-review", "done"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "urgent"];
@@ -283,19 +284,7 @@ export default function TaskListView({
                     <td className="px-4 py-3">
                       {task.assignee ? (
                         <div className="flex items-center gap-2">
-                          <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                            {task.assignee.image ? (
-                              <img
-                                src={task.assignee.image}
-                                alt={task.assignee.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-xs font-semibold text-primary">
-                                {task.assignee.name[0].toUpperCase()}
-                              </span>
-                            )}
-                          </div>
+                          <UserAvatar name={task.assignee.name} image={task.assignee.image} size={20} />
                           <span className="text-xs text-muted-foreground">
                             {task.assignee.name}
                           </span>
