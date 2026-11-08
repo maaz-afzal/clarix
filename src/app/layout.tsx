@@ -1,34 +1,39 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/providers/toast-provider";
 import ThemeProvider from "@/components/providers/theme-provider";
+import { siteConfig } from "@/lib/site";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
   title: {
-    default: "Clarix",
-    template: "%s | Clarix",
+    default: `${siteConfig.name} - ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "AI-powered project management for modern teams. Manage projects, collaborate, and ship faster.",
-  keywords: ["project management", "AI", "team collaboration", "tasks"],
-  authors: [{ name: "Clarix" }],
-  creator: "Clarix",
+  description: siteConfig.description,
   openGraph: {
     type: "website",
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} - ${siteConfig.tagline}`,
+    description: siteConfig.description,
     locale: "en_US",
-    url: "https://clarix.app",
-    siteName: "Clarix",
-    title: "Clarix - AI Project Management",
-    description: "AI-powered project management for modern teams.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Clarix - AI Project Management",
-    description: "AI-powered project management for modern teams.",
+    title: `${siteConfig.name} - ${siteConfig.tagline}`,
+    description: siteConfig.description,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
