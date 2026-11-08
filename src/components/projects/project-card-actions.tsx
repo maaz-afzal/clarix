@@ -94,7 +94,7 @@ export default function ProjectCardActions({
               )}
               <div className="my-1 border-t" />
               <button role="menuitem" className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-destructive hover:bg-accent" onClick={handleDelete}>
-                <Trash2 className="h-3.5 h-3.5" aria-hidden="true" />
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 Delete
               </button>
             </div>
