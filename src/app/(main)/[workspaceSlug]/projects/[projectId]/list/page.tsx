@@ -7,7 +7,11 @@ import TaskListView from "@/components/tasks/task-list-view";
 import type { MemberRole } from "@/lib/authorization";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Task List" };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { projectId } = await params;
+  const project = await getProjectById(projectId);
+  return { title: project ? `Task List | ${project.name}` : "Task List" };
+}
 
 type Props = {
   params: Promise<{ workspaceSlug: string; projectId: string }>;
