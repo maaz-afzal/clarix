@@ -2,6 +2,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { acceptInvitation } from "@/actions/members";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 type Props = {
   params: Promise<{ token: string }>;
