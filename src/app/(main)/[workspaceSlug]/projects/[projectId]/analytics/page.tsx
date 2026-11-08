@@ -5,7 +5,11 @@ import { notFound } from "next/navigation";
 import ProjectSummary from "@/components/ai/project-summary";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Analytics" };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { projectId } = await params;
+  const project = await getProjectById(projectId);
+  return { title: project ? `Analytics | ${project.name}` : "Analytics" };
+}
 
 type Props = {
   params: Promise<{ workspaceSlug: string; projectId: string }>;
