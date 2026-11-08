@@ -7,7 +7,11 @@ import KanbanBoard from "@/components/tasks/kanban-board";
 import type { MemberRole } from "@/lib/authorization";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Board" };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { projectId } = await params;
+  const project = await getProjectById(projectId);
+  return { title: project ? `Board | ${project.name}` : "Board" };
+}
 
 type Props = {
   params: Promise<{ workspaceSlug: string; projectId: string }>;
