@@ -1,18 +1,16 @@
-import { requireWorkspaceMember } from "@/lib/authorization";
-import AIBreakdownPanel from "@/components/ai/ai-breakdown-panel";
-import { getProjectById } from "@/lib/dal/project";
-import { getTaskById } from "@/lib/dal/task";
-import { getTaskComments, getTaskActivity } from "@/lib/dal/comments";
-import { getWorkspaceMembers } from "@/lib/dal/members";
-import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import CommentSection from "@/components/tasks/comment-section";
-import ActivityLog from "@/components/tasks/activity-log";
-import TaskEditSidebar from "@/components/tasks/task-edit-sidebar";
+import { requireWorkspaceMember } from "@/lib/authorization";
+import { getTaskById } from "@/lib/dal/task";
+import { Skeleton } from "@/components/ui/skeleton";
 import TaskTitleEditor from "@/components/tasks/task-title-editor";
-import AttachmentsSection from "@/components/tasks/attachments-section";
-import { getTaskAttachments } from "@/lib/dal/attachments";
+import {
+  TaskComments,
+  TaskActivity,
+  TaskSidebarPanels,
+} from "@/components/tasks/task-detail-sections";
 import type { Metadata } from "next";
 
 type Props = {
@@ -40,14 +38,11 @@ export default async function TaskDetailPage({ params }: Props) {
     notFound();
   }
 
-  const [comments, activities, members, project, attachments] =
-    await Promise.all([
-      getTaskComments(taskId),
-      getTaskActivity(taskId),
-      getWorkspaceMembers(membership.workspaceId),
-      getProjectById(task.projectId),
-      getTaskAttachments(taskId),
-    ]);
+  const currentUser = {
+    id: user.id,
+    name: user.name ?? "User",
+    image: user.image ?? undefined,
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -57,71 +52,63 @@ export default async function TaskDetailPage({ params }: Props) {
           href={`/${workspaceSlug}/projects/${projectId}/list`}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
           Back to List
         </Link>
       </div>
 
-      {/* Main content wrapper */}
       <div className="flex flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
-        <div className="flex-1 p-6 space-y-6 lg:overflow-y-auto">
+        <div className="flex-1 space-y-6 p-6 lg:overflow-y-auto">
           <div className="space-y-3">
             <TaskTitleEditor task={task} workspaceSlug={workspaceSlug} />
           </div>
 
           {/* Comments */}
           <div className="border-t pt-6">
-            <CommentSection
-              comments={comments}
-              workspaceSlug={workspaceSlug}
-              taskId={taskId}
-              projectId={projectId}
-              currentUserId={user.id}
-              currentUserName={user.name ?? "User"}
-              currentUserImage={user.image ?? undefined}
-              currentUserRole={membership.role}
-            />
+            <Suspense fallback={<SectionSkeleton rows={3} />}>
+              <TaskComments
+                task={task}
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                user={currentUser}
+                role={membership.role}
+              />
+            </Suspense>
           </div>
 
           {/* Activity */}
-          {activities.length > 0 && (
-            <div className="border-t pt-6">
-              <h3 className="text-sm font-semibold mb-4">Activity</h3>
-              <ActivityLog activities={activities} />
-            </div>
-          )}
+          <Suspense fallback={<SectionSkeleton rows={2} />}>
+            <TaskActivity task={task} />
+          </Suspense>
         </div>
 
         <aside
           aria-label="Task details"
           className="w-full shrink-0 border-t p-4 lg:w-64 lg:overflow-y-auto lg:border-l lg:border-t-0"
         >
-          <h3 className="text-sm font-semibold mb-4">Details</h3>
-          <TaskEditSidebar
-            task={task}
-            members={members}
-            workspaceSlug={workspaceSlug}
-          />
-
-          <div className="border-t pt-4 mt-4">
-            <AIBreakdownPanel
+          <h3 className="mb-4 text-sm font-semibold">Details</h3>
+          <Suspense fallback={<SectionSkeleton rows={4} />}>
+            <TaskSidebarPanels
               task={task}
               workspaceSlug={workspaceSlug}
-              projectName={project?.name}
-            />
-          </div>
-          <div className="border-t pt-4 mt-4">
-            <AttachmentsSection
-              initialAttachments={attachments}
-              workspaceSlug={workspaceSlug}
-              taskId={taskId}
               projectId={projectId}
-              currentUserId={user.id}
-              currentUserRole={membership.role}
+              workspaceId={membership.workspaceId}
+              user={currentUser}
+              role={membership.role}
             />
-          </div>
+          </Suspense>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function SectionSkeleton({ rows }: { rows: number }) {
+  return (
+    <div className="space-y-3" aria-busy="true">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
     </div>
   );
 }
