@@ -12,6 +12,7 @@ export interface ITask extends Document {
   createdBy: mongoose.Types.ObjectId;
   dueDate?: Date;
   position: number;
+  completedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +65,10 @@ const TaskSchema = new Schema<ITask>(
       type: Number,
       default: 0,
     },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -74,6 +79,7 @@ TaskSchema.index({ projectId: 1, status: 1 });
 TaskSchema.index({ projectId: 1, position: 1 });
 TaskSchema.index({ workspaceId: 1, assigneeId: 1 });
 TaskSchema.index({ workspaceId: 1, dueDate: 1 });
+TaskSchema.index({ projectId: 1, completedAt: 1 });
 TaskSchema.index({ title: "text", description: "text" });
 
 const Task: Model<ITask> =
