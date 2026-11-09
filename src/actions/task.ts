@@ -86,6 +86,7 @@ export async function createTask(
       dueDate: result.data.dueDate ? new Date(result.data.dueDate) : undefined,
       createdBy: new mongoose.Types.ObjectId(userId),
       position,
+      completedAt: result.data.status === "done" ? new Date() : undefined,
     });
 
     await logActivity(
@@ -129,8 +130,14 @@ export async function updateTask(
     if (result.data.title !== undefined) updateData.title = result.data.title;
     if (result.data.description !== undefined)
       updateData.description = result.data.description;
-    if (result.data.status !== undefined)
+    if (result.data.status !== undefined) {
       updateData.status = result.data.status;
+      if (result.data.status === "done") {
+        if (task.status !== "done") updateData.completedAt = new Date();
+      } else {
+        updateData.completedAt = null;
+      }
+    }
     if (result.data.priority !== undefined)
       updateData.priority = result.data.priority;
     if (result.data.dueDate !== undefined)
@@ -216,39 +223,55 @@ export async function updateTaskPositions(
   workspaceSlug: string,
   updates: { taskId: string; position: number; status: string }[],
 ): Promise<TaskActionResult> {
-  const { membership } = await verifyWorkspaceMember(workspaceSlug);
+  return safeAction(async () => {
+    const { membership } = await verifyWorkspaceMember(workspaceSlug);
 
-  try {
-    await connectDB();
+    const validStatuses = ["todo", "in-progress", "in-review", "done"];
+    const cleaned = updates.filter(
+      (u) =>
+        mongoose.isValidObjectId(u.taskId) &&
+        validStatuses.includes(u.status) &&
+        Number.isFinite(u.position)
+    );
 
-    const taskIds = updates.map((u) => new mongoose.Types.ObjectId(u.taskId));
-    const validTasks = await Task.find({
-      _id: { $in: taskIds },
-      workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
-    })
-      .select("_id")
-      .lean();
+    if (cleaned.length === 0) return { success: true };
 
-    const validTaskIds = new Set(validTasks.map((t) => t._id.toString()));
+    try {
+      await connectDB();
 
-    const validUpdates = updates.filter((u) => validTaskIds.has(u.taskId));
+      // Sirf is workspace ke tasks, doosre workspace ke IDs yahin filter ho jayenge
+      const existing = await Task.find({
+        _id: { $in: cleaned.map((u) => u.taskId) },
+        workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
+      })
+        .select("completedAt")
+        .lean();
 
-    if (validUpdates.length === 0) {
+      const byId = new Map(existing.map((t) => [t._id.toString(), t]));
+
+      const ops = cleaned.flatMap((u) => {
+        const current = byId.get(u.taskId);
+        if (!current) return [];
+
+        const $set: Record<string, unknown> = {
+          position: u.position,
+          status: u.status,
+        };
+        if (u.status === "done") {
+          if (!current.completedAt) $set.completedAt = new Date();
+        } else {
+          $set.completedAt = null;
+        }
+
+        return [{ updateOne: { filter: { _id: current._id }, update: { $set } } }];
+      });
+
+      if (ops.length > 0) await Task.bulkWrite(ops);
+
       return { success: true };
+    } catch (error) {
+      console.error("Position update error:", error);
+      return { success: false, error: "Could not save task positions" };
     }
-
-    const bulkOps = validUpdates.map(({ taskId, position, status }) => ({
-      updateOne: {
-        filter: { _id: new mongoose.Types.ObjectId(taskId) },
-        update: { $set: { position, status } },
-      },
-    }));
-
-    await Task.bulkWrite(bulkOps);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Position update error:", error);
-    return { success: false, error: "Could not update positions" };
-  }
+  });
 }
