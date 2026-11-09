@@ -29,7 +29,7 @@ export default async function AnalyticsPage({ params }: Props) {
   }
 
   const analytics = await getProjectAnalytics(projectId, membership.workspaceId);
-  const { total, overdue, byStatus, byPriority, trend } = analytics;
+  const { total, overdue, byStatus, byPriority, trend, assigneeWorkload } = analytics;
 
   const completionRate =
     total > 0 ? Math.round((byStatus.done / total) * 100) : 0;
@@ -99,6 +99,7 @@ export default async function AnalyticsPage({ params }: Props) {
             byStatus={byStatus}
             byPriority={byPriority}
             trend={trend}
+            assigneeWorkload={assigneeWorkload}
           />
         </>
       )}
