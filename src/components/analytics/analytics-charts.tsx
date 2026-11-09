@@ -99,12 +99,14 @@ interface AnalyticsChartsProps {
   byStatus: ProjectAnalytics["byStatus"];
   byPriority: ProjectAnalytics["byPriority"];
   trend: ProjectAnalytics["trend"];
+  assigneeWorkload: ProjectAnalytics["assigneeWorkload"];
 }
 
 export default function AnalyticsCharts({
   byStatus,
   byPriority,
   trend,
+  assigneeWorkload,
 }: AnalyticsChartsProps) {
   const statusData = STATUS_META.map((s) => ({
     name: s.label,
@@ -169,6 +171,28 @@ export default function AnalyticsCharts({
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {priorityData.map((p) => (
                 <Cell key={p.name} fill={p.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard
+        title="Assignee workload (open tasks)"
+        summary={`Open tasks by assignee: ${assigneeWorkload
+          .map((a) => `${a.name} ${a.count}`)
+          .join(", ")}`}
+        rows={assigneeWorkload.map((a) => ({ label: a.name, value: a.count }))}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={assigneeWorkload} layout="vertical" margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" strokeOpacity={0.2} />
+            <XAxis type="number" allowDecimals={false} tick={{ fill: "currentColor", fontSize: 12 }} tickLine={false} axisLine={false} />
+            <YAxis dataKey="name" type="category" tick={{ fill: "currentColor", fontSize: 12 }} tickLine={false} axisLine={false} width={120} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "currentColor", fillOpacity: 0.08 }} />
+            <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#3b82f6">
+              {assigneeWorkload.map((a) => (
+                <Cell key={a.name} fill={a.name === "Unassigned" ? "#94a3b8" : "#3b82f6"} />
               ))}
             </Bar>
           </BarChart>
