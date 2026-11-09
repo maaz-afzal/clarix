@@ -76,7 +76,7 @@ export async function generateTaskDescription(
       const { text } = await generateText({
         model: geminiFlash,
         prompt,
-        maxTokens: 200,
+        maxOutputTokens: 200,
         temperature: 0.7,
       });
 
@@ -138,7 +138,7 @@ export async function generateTaskBreakdown(
       const { text } = await generateText({
         model: geminiFlash,
         prompt,
-        maxTokens: 400,
+        maxOutputTokens: 400,
         temperature: 0.5,
       });
 
@@ -219,7 +219,7 @@ export async function generateProjectSummary(
       const { text } = await generateText({
         model: geminiFlash,
         prompt,
-        maxTokens: 150,
+        maxOutputTokens: 150,
         temperature: 0.6,
       });
 
@@ -274,7 +274,7 @@ export async function generatePrioritySuggestion(
       const { text } = await generateText({
         model: geminiFlash,
         prompt,
-        maxTokens: 100,
+        maxOutputTokens: 100,
         temperature: 0.3,
       });
 
