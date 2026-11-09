@@ -13,7 +13,7 @@ export interface ProjectAnalytics {
   byStatus: Record<Status, number>;
   byPriority: Record<Priority, number>;
   trend: { date: string; completed: number }[];
-  assigneeWorkload: { name: string; count: number }[];
+  assigneeWorkload: { id: string; name: string; count: number }[];
 }
 
 const TREND_DAYS = 14;
@@ -110,22 +110,26 @@ export async function getProjectAnalytics(
     const assigneeIds = assigneeRows
       .map((r) => r._id)
       .filter((id): id is mongoose.Types.ObjectId => id != null);
-    const users = await User.find({ _id: { $in: assigneeIds } })
-      .select("name")
-      .lean();
+    let users: { _id: mongoose.Types.ObjectId; name: string }[] = [];
+    if (assigneeIds.length > 0) {
+      users = await User.find({ _id: { $in: assigneeIds } })
+        .select("name")
+        .lean();
+    }
     const userMap = new Map(users.map((u) => [u._id.toString(), u.name]));
     const unassignedCount = assigneeRows.find((r) => r._id == null)?.count ?? 0;
 
     const assigneeWorkload = assigneeRows
       .filter((r) => r._id != null)
       .map((r) => ({
+        id: r._id.toString(),
         name: userMap.get(r._id.toString()) ?? "Unknown",
         count: r.count,
       }))
       .sort((a, b) => b.count - a.count);
 
     if (unassignedCount > 0) {
-      assigneeWorkload.push({ name: "Unassigned", count: unassignedCount });
+      assigneeWorkload.push({ id: "unassigned", name: "Unassigned", count: unassignedCount });
     }
 
     return { total, overdue, byStatus, byPriority, trend, assigneeWorkload };

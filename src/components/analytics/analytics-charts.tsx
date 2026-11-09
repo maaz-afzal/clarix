@@ -59,18 +59,22 @@ function ChartTooltip({ active, payload, label }: TooltipProps) {
 interface ChartCardProps {
   title: string;
   summary: string;
-  rows: { label: string; value: number }[];
+  rows: { id: string; label: string; value: number }[];
   children: ReactNode;
+  height?: number;
 }
 
-function ChartCard({ title, summary, rows, children }: ChartCardProps) {
+function ChartCard({ title, summary, rows, children, height }: ChartCardProps) {
+  const style = height ? { height } : { height: 224 };
+
   return (
     <figure className="rounded-xl border bg-card p-5">
       <figcaption className="mb-4 text-sm font-semibold">{title}</figcaption>
       <div
         role="img"
         aria-label={summary}
-        className="h-56 text-muted-foreground"
+        style={style}
+        className="text-muted-foreground"
       >
         {children}
       </div>
@@ -84,7 +88,7 @@ function ChartCard({ title, summary, rows, children }: ChartCardProps) {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.label}>
+            <tr key={row.id ?? row.label}>
               <th scope="row">{row.label}</th>
               <td>{row.value}</td>
             </tr>
@@ -109,16 +113,19 @@ export default function AnalyticsCharts({
   assigneeWorkload,
 }: AnalyticsChartsProps) {
   const statusData = STATUS_META.map((s) => ({
+    key: s.key,
     name: s.label,
     value: byStatus[s.key],
     color: s.color,
   }));
   const priorityData = PRIORITY_META.map((p) => ({
+    key: p.key,
     name: p.label,
     value: byPriority[p.key],
     color: p.color,
   }));
   const trendData = trend.map((t) => ({
+    id: t.date,
     name: formatDay(t.date),
     completed: t.completed,
   }));
@@ -132,7 +139,7 @@ export default function AnalyticsCharts({
         summary={`Tasks by status: ${statusData
           .map((s) => `${s.name} ${s.value}`)
           .join(", ")}`}
-        rows={statusData.map((s) => ({ label: s.name, value: s.value }))}
+        rows={statusData.map((s) => ({ id: s.key, label: s.name, value: s.value }))}
       >
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -147,7 +154,7 @@ export default function AnalyticsCharts({
               {statusData
                 .filter((s) => s.value > 0)
                 .map((s) => (
-                  <Cell key={s.name} fill={s.color} />
+                  <Cell key={s.key} fill={s.color} />
                 ))}
             </Pie>
             <Tooltip content={<ChartTooltip />} />
@@ -160,7 +167,7 @@ export default function AnalyticsCharts({
         summary={`Tasks by priority: ${priorityData
           .map((p) => `${p.name} ${p.value}`)
           .join(", ")}`}
-        rows={priorityData.map((p) => ({ label: p.name, value: p.value }))}
+        rows={priorityData.map((p) => ({ id: p.key, label: p.name, value: p.value }))}
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={priorityData} margin={{ left: -20, right: 8 }}>
@@ -170,7 +177,7 @@ export default function AnalyticsCharts({
             <Tooltip content={<ChartTooltip />} cursor={{ fill: "currentColor", fillOpacity: 0.08 }} />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {priorityData.map((p) => (
-                <Cell key={p.name} fill={p.color} />
+                <Cell key={p.key} fill={p.color} />
               ))}
             </Bar>
           </BarChart>
@@ -179,31 +186,48 @@ export default function AnalyticsCharts({
 
       <ChartCard
         title="Assignee workload (open tasks)"
-        summary={`Open tasks by assignee: ${assigneeWorkload
-          .map((a) => `${a.name} ${a.count}`)
-          .join(", ")}`}
-        rows={assigneeWorkload.map((a) => ({ label: a.name, value: a.count }))}
+        summary={assigneeWorkload.length > 0
+          ? `Open tasks by assignee: ${assigneeWorkload
+              .map((a) => `${a.name} ${a.count}`)
+              .join(", ")}`
+          : "No open tasks"}
+        rows={assigneeWorkload.map((a) => ({ id: a.id, label: a.name, value: a.count }))}
+        height={Math.max(224, assigneeWorkload.length * 36 + 40)}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={assigneeWorkload} layout="vertical" margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" strokeOpacity={0.2} />
-            <XAxis type="number" allowDecimals={false} tick={{ fill: "currentColor", fontSize: 12 }} tickLine={false} axisLine={false} />
-            <YAxis dataKey="name" type="category" tick={{ fill: "currentColor", fontSize: 12 }} tickLine={false} axisLine={false} width={120} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: "currentColor", fillOpacity: 0.08 }} />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#3b82f6">
-              {assigneeWorkload.map((a) => (
-                <Cell key={a.name} fill={a.name === "Unassigned" ? "#94a3b8" : "#3b82f6"} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        {assigneeWorkload.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            No open tasks
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={assigneeWorkload} layout="vertical" margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" strokeOpacity={0.2} />
+              <XAxis type="number" allowDecimals={false} tick={{ fill: "currentColor", fontSize: 12 }} tickLine={false} axisLine={false} />
+              <YAxis
+                dataKey="name"
+                type="category"
+                tick={{ fill: "currentColor", fontSize: 12 }}
+                tickLine={false}
+                axisLine={false}
+                width={120}
+                tickFormatter={(name) => (name.length > 16 ? `${name.slice(0, 15)}…` : name)}
+              />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: "currentColor", fillOpacity: 0.08 }} />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="#3b82f6">
+                {assigneeWorkload.map((a) => (
+                  <Cell key={a.id} fill={a.id === "unassigned" ? "#94a3b8" : "#3b82f6"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </ChartCard>
 
       <div className="lg:col-span-2">
         <ChartCard
           title="Tasks completed, last 14 days"
           summary={`${totalCompleted} tasks completed in the last 14 days`}
-          rows={trendData.map((t) => ({ label: t.name, value: t.completed }))}
+          rows={trendData.map((t) => ({ id: t.id, label: t.name, value: t.completed }))}
         >
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trendData} margin={{ left: -20, right: 8 }}>
