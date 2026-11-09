@@ -1,8 +1,11 @@
+import { BarChart3 } from "lucide-react";
 import { requireWorkspaceMember } from "@/lib/authorization";
 import { getProjectById } from "@/lib/dal/project";
-import { getTasksByProject } from "@/lib/dal/task";
+import { getProjectAnalytics } from "@/lib/dal/analytics";
 import { notFound } from "next/navigation";
 import ProjectSummary from "@/components/ai/project-summary";
+import AnalyticsCharts from "@/components/analytics/analytics-charts";
+import EmptyState from "@/components/shared/empty-state";
 import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -25,113 +28,79 @@ export default async function AnalyticsPage({ params }: Props) {
     notFound();
   }
 
-  const tasks = await getTasksByProject(projectId);
-
-  const now = new Date();
-
-  const stats = {
-    total: tasks.length,
-    todo: tasks.filter((t) => t.status === "todo").length,
-    inProgress: tasks.filter((t) => t.status === "in-progress").length,
-    inReview: tasks.filter((t) => t.status === "in-review").length,
-    done: tasks.filter((t) => t.status === "done").length,
-    overdue: tasks.filter(
-      (t) => t.dueDate && new Date(t.dueDate) < now && t.status !== "done",
-    ).length,
-  };
+  const analytics = await getProjectAnalytics(projectId, membership.workspaceId);
+  const { total, overdue, byStatus, byPriority, trend } = analytics;
 
   const completionRate =
-    stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+    total > 0 ? Math.round((byStatus.done / total) * 100) : 0;
+
+  const summaryStats = {
+    total,
+    todo: byStatus.todo,
+    inProgress: byStatus["in-progress"],
+    inReview: byStatus["in-review"],
+    done: byStatus.done,
+    overdue,
+  };
+
+  const statCards = [
+    { label: "Total Tasks", value: total, color: "text-foreground" },
+    { label: "Completed", value: byStatus.done, color: "text-green-600" },
+    { label: "In Progress", value: byStatus["in-progress"], color: "text-blue-600" },
+    { label: "Overdue", value: overdue, color: "text-destructive" },
+  ];
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
-      {/* AI Summary */}
+    <div className="max-w-4xl space-y-6 p-6">
       <ProjectSummary
         workspaceSlug={workspaceSlug}
         projectName={project.name}
-        stats={stats}
+        stats={summaryStats}
       />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Total Tasks",
-            value: stats.total,
-            color: "text-foreground",
-          },
-          { label: "Completed", value: stats.done, color: "text-green-600" },
-          {
-            label: "In Progress",
-            value: stats.inProgress,
-            color: "text-blue-600",
-          },
-          {
-            label: "In Review",
-            value: stats.inReview,
-            color: "text-purple-600",
-          },
-          { label: "Todo", value: stats.todo, color: "text-muted-foreground" },
-          { label: "Overdue", value: stats.overdue, color: "text-destructive" },
-        ].map((stat) => (
-          <div key={stat.label} className="border rounded-lg p-4 bg-card">
-            <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {statCards.map((stat) => (
+          <div key={stat.label} className="rounded-lg border bg-card p-4">
+            <p className="mb-1 text-xs text-muted-foreground">{stat.label}</p>
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Progress bar */}
-      <div className="border rounded-xl p-5 bg-card space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Overall Progress</h3>
-          <span className="text-sm font-bold">{completionRate}%</span>
-        </div>
-        <div className="h-3 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all"
-            style={{ width: `${completionRate}%` }}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {stats.done} of {stats.total} tasks complete
-        </p>
-      </div>
-
-      {/* Status breakdown */}
-      {stats.total > 0 && (
-        <div className="border rounded-xl p-5 bg-card space-y-3">
-          <h3 className="text-sm font-semibold">Status Breakdown</h3>
-          {[
-            { label: "Todo", value: stats.todo, color: "bg-slate-400" },
-            {
-              label: "In Progress",
-              value: stats.inProgress,
-              color: "bg-blue-500",
-            },
-            {
-              label: "In Review",
-              value: stats.inReview,
-              color: "bg-purple-500",
-            },
-            { label: "Done", value: stats.done, color: "bg-green-500" },
-          ].map((item) => (
-            <div key={item.label} className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{item.label}</span>
-                <span className="font-medium">{item.value}</span>
-              </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${item.color} rounded-full`}
-                  style={{
-                    width: `${stats.total > 0 ? (item.value / stats.total) * 100 : 0}%`,
-                  }}
-                />
-              </div>
+      {total === 0 ? (
+        <EmptyState
+          icon={BarChart3}
+          title="No data yet"
+          description="Add tasks to this project to see charts here."
+        />
+      ) : (
+        <>
+          <div className="space-y-3 rounded-xl border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Overall progress</h3>
+              <span className="text-sm font-bold">{completionRate}%</span>
             </div>
-          ))}
-        </div>
+            <div
+              role="progressbar"
+              aria-valuenow={completionRate}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Overall project completion"
+              className="h-3 overflow-hidden rounded-full bg-muted"
+            >
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${completionRate}%` }}
+              />
+            </div>
+          </div>
+
+          <AnalyticsCharts
+            byStatus={byStatus}
+            byPriority={byPriority}
+            trend={trend}
+          />
+        </>
       )}
     </div>
   );
