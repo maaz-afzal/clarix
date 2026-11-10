@@ -4,7 +4,7 @@ const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY!,
 });
 
-export const geminiFlash = google("gemini-2.5-flash");
+export const geminiFlash = google("gemini-3.5-flash-lite");
 
 export interface AIResult<T> {
   success: boolean;
