@@ -7,7 +7,6 @@ import { Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { createTaskSchema, type CreateTaskInput } from "@/lib/validations/task";
 import { createTask } from "@/actions/task";
-import { generateTaskDescription } from "@/actions/ai";
 import AIDescriptionButton from "../ai/ai-description-button";
 import PrioritySuggester from "@/components/ai/priority-suggester";
 
@@ -111,6 +110,8 @@ export default function CreateTaskForm({
             getTitle={() => watch("title")}
             onGenerated={(text) => setValue("description", text, { shouldDirty: true })}
             onStreamingChange={setIsGenerating}
+            currentValue={watch("description") ?? ""}
+            onRestoreValue={(value) => setValue("description", value, { shouldDirty: true })}
           />
         </div>
         <textarea

@@ -4,9 +4,7 @@ import { generateText } from "ai";
 import { geminiFlash } from "@/lib/ai";
 import { verifyWorkspaceMember } from "@/lib/authorization";
 import {
-  generateTaskDescriptionSchema,
   generateTaskBreakdownSchema,
-  type GenerateTaskDescriptionInput,
   type GenerateTaskBreakdownInput,
   generatePrioritySuggestionSchema,
 } from "@/lib/validations/ai";
@@ -30,65 +28,6 @@ interface AIPriorityResult {
   priority?: string;
   reason?: string;
   error?: string;
-}
-
-export async function generateTaskDescription(
-  workspaceSlug: string,
-  input: GenerateTaskDescriptionInput,
-): Promise<AITextResult> {
-  return safeAction(async () => {
-    const { userId } = await verifyWorkspaceMember(workspaceSlug);
-
-    const rateLimit = checkRateLimit(`ai:${userId}`, 20, 60 * 60 * 1000);
-
-    if (!rateLimit.allowed) {
-      return {
-        success: false,
-        error: "Too many AI requests. 20 requests are allowed per hour.",
-      };
-    }
-
-    const result = generateTaskDescriptionSchema.safeParse(input);
-    if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
-    }
-
-    const { title, projectName, context } = result.data;
-
-    try {
-      const prompt = [
-        `Write a clear, professional task description for a software project task.`,
-        `Task title: "${title}"`,
-        projectName ? `Project: "${projectName}"` : "",
-        context ? `Additional context: "${context}"` : "",
-        ``,
-        `Requirements:`,
-        `- 2-4 sentences maximum`,
-        `- Clear and actionable`,
-        `- No bullet points`,
-        `- Focus on what needs to be done and why`,
-        `- Do not repeat the title`,
-        `- Output only the description, nothing else`,
-      ]
-        .filter(Boolean)
-        .join("\n");
-
-      const { text } = await generateText({
-        model: geminiFlash,
-        prompt,
-        maxOutputTokens: 200,
-        temperature: 0.7,
-      });
-
-      return { success: true, text: text.trim() };
-    } catch (error) {
-      console.error("AI description error:", error);
-      return {
-        success: false,
-        error: "AI could not generate a description. Please try again.",
-      };
-    }
-  });
 }
 
 export async function generateTaskBreakdown(

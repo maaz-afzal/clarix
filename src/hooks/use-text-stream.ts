@@ -20,7 +20,6 @@ export function useTextStream() {
     controllerRef.current?.abort()
   }, [])
 
-  // Component hat jaye to chalti hui request band ho jaye
   useEffect(() => {
     return () => controllerRef.current?.abort()
   }, [])
@@ -83,7 +82,6 @@ export function useTextStream() {
         }
         return { ok: false, text, error: "Connection lost. Please try again." }
       } finally {
-        // Agar naya start() purane ko abort kar chuka ho to uski state na chhedo
         if (controllerRef.current === controller) {
           controllerRef.current = null
           setIsStreaming(false)

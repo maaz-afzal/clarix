@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Sparkles, Square } from "lucide-react"
 import { useTextStream } from "@/hooks/use-text-stream"
 import { notify } from "@/lib/notify"
@@ -12,6 +12,9 @@ interface AIDescriptionButtonProps {
   // Har chunk par ab tak ka poora text milta hai
   onGenerated: (text: string) => void
   onStreamingChange?: (isStreaming: boolean) => void
+  // Current textarea value to save/restore on error
+  currentValue: string
+  onRestoreValue?: (value: string) => void
 }
 
 export default function AIDescriptionButton({
@@ -20,8 +23,11 @@ export default function AIDescriptionButton({
   getTitle,
   onGenerated,
   onStreamingChange,
+  currentValue,
+  onRestoreValue,
 }: AIDescriptionButtonProps) {
   const { start, stop, isStreaming } = useTextStream()
+  const previousValueRef = useRef<string>("")
 
   useEffect(() => {
     onStreamingChange?.(isStreaming)
@@ -35,6 +41,9 @@ export default function AIDescriptionButton({
       return
     }
 
+    // Save current value before starting stream
+    previousValueRef.current = currentValue
+
     const result = await start({
       url: "/api/ai/description",
       body: { workspaceSlug, title, projectName },
@@ -43,6 +52,10 @@ export default function AIDescriptionButton({
 
     if (!result.ok && !result.aborted) {
       notify.error(result.error ?? "Could not generate a description")
+      // Restore previous value on error or empty response
+      if (onRestoreValue) {
+        onRestoreValue(previousValueRef.current)
+      }
     }
   }
 

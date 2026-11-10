@@ -5,20 +5,13 @@ export const generatePrioritySuggestionSchema = z.object({
   description: z.string().max(2000).optional(),
 });
 
-export const generateTaskDescriptionSchema = z.object({
+export const streamDescriptionRequestSchema = z.object({
   title: z
     .string()
     .min(3, "Title must be at least 3 characters")
     .max(500, "Title is too long"),
   projectName: z.string().optional(),
   context: z.string().max(500, "Context is too long").optional(),
-});
-
-export type GenerateTaskDescriptionInput = z.infer<
-  typeof generateTaskDescriptionSchema
->;
-
-export const streamDescriptionRequestSchema = generateTaskDescriptionSchema.extend({
   workspaceSlug: z.string().min(1),
 });
 

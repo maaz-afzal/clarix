@@ -20,3 +20,36 @@ export function buildDescriptionPrompt(input: {
     .filter(Boolean)
     .join("\n")
 }
+
+export function buildSummaryPrompt(input: {
+  projectName: string
+  stats: {
+    total: number
+    todo: number
+    inProgress: number
+    inReview: number
+    done: number
+    overdue: number
+  }
+}): string {
+  const completionRate =
+    input.stats.total > 0
+      ? Math.round((input.stats.done / input.stats.total) * 100)
+      : 0
+
+  return [
+    "Write a brief, professional project status summary (2-3 sentences).",
+    `Project: "${input.projectName}"`,
+    `Stats:`,
+    `- Total tasks: ${input.stats.total}`,
+    `- Completion rate: ${completionRate}%`,
+    `- In progress: ${input.stats.inProgress}`,
+    `- In review: ${input.stats.inReview}`,
+    `- Overdue: ${input.stats.overdue}`,
+    ``,
+    `Be honest about the status. If overdue tasks exist, mention it.`,
+    `Output only the summary, no labels or headers.`,
+  ]
+    .filter(Boolean)
+    .join("\n")
+}
