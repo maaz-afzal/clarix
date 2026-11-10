@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Sparkles } from "lucide-react";
@@ -48,6 +48,7 @@ export default function CreateTaskForm({
   onSuccess,
 }: CreateTaskFormProps) {
   const [isPending, startTransition] = useTransition();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const {
     register,
@@ -108,14 +109,16 @@ export default function CreateTaskForm({
             workspaceSlug={workspaceSlug}
             projectName={projectName}
             getTitle={() => watch("title")}
-            onGenerated={(text) => setValue("description", text)}
+            onGenerated={(text) => setValue("description", text, { shouldDirty: true })}
+            onStreamingChange={setIsGenerating}
           />
         </div>
         <textarea
           {...register("description")}
           placeholder="Task Description"
           rows={3}
-          disabled={isPending}
+          disabled={isPending || isGenerating}
+          readOnly={isGenerating}
           className="w-full px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 resize-none"
         />
       </div>
@@ -196,13 +199,18 @@ export default function CreateTaskForm({
       {/* Submit */}
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || isGenerating}
         className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {isPending ? (
           <>
             <span className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
             Creating...
+          </>
+        ) : isGenerating ? (
+          <>
+            <span className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+            Generating...
           </>
         ) : (
           "Create Task"
