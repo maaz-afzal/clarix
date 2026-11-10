@@ -18,6 +18,14 @@ export type GenerateTaskDescriptionInput = z.infer<
   typeof generateTaskDescriptionSchema
 >;
 
+export const streamDescriptionRequestSchema = generateTaskDescriptionSchema.extend({
+  workspaceSlug: z.string().min(1),
+});
+
+export type StreamDescriptionRequest = z.infer<
+  typeof streamDescriptionRequestSchema
+>;
+
 export const generateTaskBreakdownSchema = z.object({
   title: z.string().min(3).max(500),
   description: z.string().max(2000).optional(),
