@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/layout/Sidebar";
-import SearchShortcut from "@/components/layout/search-shortcut";
+import CommandPalette from "@/components/search/command-palette";
 import { Menu, X } from "lucide-react";
 
 type Workspace = {
@@ -56,7 +56,7 @@ export default function WorkspaceShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <SearchShortcut workspaceSlug={workspaceSlug} />
+      <CommandPalette workspaceSlug={workspaceSlug} />
 
       {/* Skip link */}
       <a
