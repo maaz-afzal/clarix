@@ -2,6 +2,7 @@ import connectDB from "@/lib/db";
 import Task from "@/models/Task";
 import Project from "@/models/Project";
 import mongoose from "mongoose";
+import { escapeRegExp } from "@/lib/utils";
 
 export interface SearchResult {
   tasks: SearchTask[];
@@ -156,7 +157,7 @@ async function searchFallback(
   type?: "task" | "project",
 ): Promise<SearchResult> {
   const workspaceObjectId = new mongoose.Types.ObjectId(workspaceId);
-  const regex = new RegExp(query.trim(), "i");
+  const regex = new RegExp(escapeRegExp(query.trim()), "i");
 
   try {
     const [tasks, projects] = await Promise.all([

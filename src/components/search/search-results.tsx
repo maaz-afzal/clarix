@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckSquare, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, escapeRegExp } from "@/lib/utils";
 import type { SearchResult } from "@/lib/dal/search";
 import EmptyState from "@/components/shared/empty-state";
 
@@ -25,15 +25,15 @@ interface SearchResultsProps {
 }
 
 function Highlight({ text, query }: { text: string; query: string }) {
-  if (!query.trim()) return <span>{text}</span>;
+  const needle = query.trim();
+  if (!needle) return <span>{text}</span>;
 
-  const regex = new RegExp(`(${query.trim()})`, "gi");
-  const parts = text.split(regex);
+  const parts = text.split(new RegExp(`(${escapeRegExp(needle)})`, "gi"));
 
   return (
     <span>
       {parts.map((part, i) =>
-        regex.test(part) ? (
+        part.toLowerCase() === needle.toLowerCase() ? (
           <mark
             key={i}
             className="bg-yellow-100 text-yellow-900 rounded px-0.5"
