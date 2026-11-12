@@ -24,31 +24,27 @@ type Status = "idle" | "loading" | "error";
 
 interface CommandPaletteProps {
   workspaceSlug: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function CommandPalette({ workspaceSlug }: CommandPaletteProps) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((prev) => !prev);
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
-
+export default function CommandPalette({
+  workspaceSlug,
+  open,
+  onOpenChange,
+}: CommandPaletteProps) {
   return (
     <CommandDialog
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={onOpenChange}
       shouldFilter={false}
       title="Search"
       description="Search tasks and projects, or jump to a page."
     >
-      <PaletteBody workspaceSlug={workspaceSlug} onClose={() => setOpen(false)} />
+      <PaletteBody
+        workspaceSlug={workspaceSlug}
+        onClose={() => onOpenChange(false)}
+      />
     </CommandDialog>
   );
 }
@@ -63,7 +59,7 @@ function PaletteBody({
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult | null>(null);
-  const [status, setStatus] = useState<Status>("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const abortRef = useRef<AbortController | null>(null);
 
   const runSearch = useDebouncedCallback(async (q: string) => {
@@ -117,10 +113,22 @@ function PaletteBody({
   const base = `/${workspaceSlug}`;
 
   const navItems = [
-    { label: "Dashboard", href: `${base}/dashboard`, icon: LayoutDashboard },
-    { label: "Projects", href: `${base}/projects`, icon: FolderKanban },
-    { label: "Notifications", href: `${base}/notifications`, icon: Bell },
-    { label: "Settings", href: `${base}/settings`, icon: Settings },
+    {
+      label: "Dashboard",
+      href: `/${workspaceSlug}/dashboard`,
+      icon: LayoutDashboard,
+    },
+    {
+      label: "Projects",
+      href: `/${workspaceSlug}/projects`,
+      icon: FolderKanban,
+    },
+    {
+      label: "Notifications",
+      href: `/${workspaceSlug}/notifications`,
+      icon: Bell,
+    },
+    { label: "Settings", href: `/${workspaceSlug}/settings`, icon: Settings },
   ];
 
   return (
@@ -148,7 +156,10 @@ function PaletteBody({
         )}
 
         {hasQuery && status === "loading" && (
-          <p role="status" className="py-6 text-center text-sm text-muted-foreground">
+          <p
+            role="status"
+            className="py-6 text-center text-sm text-muted-foreground"
+          >
             Searching...
           </p>
         )}
@@ -160,8 +171,11 @@ function PaletteBody({
         )}
 
         {hasQuery && status === "idle" && results?.totalCount === 0 && (
-          <p role="status" className="py-6 text-center text-sm text-muted-foreground">
-            No results for &quot;{trimmed}&quot;
+          <p
+            role="status"
+            className="py-6 text-center text-sm text-muted-foreground"
+          >
+            No results for "{trimmed}"
           </p>
         )}
 
@@ -213,7 +227,7 @@ function PaletteBody({
               }
             >
               <Search className="h-4 w-4" aria-hidden="true" />
-              See all results for &quot;{trimmed}&quot;
+              See all results for "{trimmed}"
             </CommandItem>
           </CommandGroup>
         )}
