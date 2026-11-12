@@ -44,16 +44,21 @@ export async function searchWorkspace(
 
     const workspaceObjectId = new mongoose.Types.ObjectId(workspaceId);
     const cleanQuery = query.trim();
+    const escapedQuery = escapeRegExp(cleanQuery);
+    const prefixRegex = new RegExp(`^${escapedQuery}`, "i");
 
     const taskPromise =
       type === "project"
         ? Promise.resolve([])
         : Task.find({
-            $text: { $search: cleanQuery },
+            $or: [
+              { $text: { $search: cleanQuery } },
+              { title: { $regex: prefixRegex } },
+              { description: { $regex: prefixRegex } },
+            ],
             workspaceId: workspaceObjectId,
           })
             .select("title description status priority projectId dueDate")
-            .sort({ score: { $meta: "textScore" } })
             .limit(10)
             .lean();
 
@@ -61,11 +66,14 @@ export async function searchWorkspace(
       type === "task"
         ? Promise.resolve([])
         : Project.find({
-            $text: { $search: cleanQuery },
+            $or: [
+              { $text: { $search: cleanQuery } },
+              { name: { $regex: prefixRegex } },
+              { description: { $regex: prefixRegex } },
+            ],
             workspaceId: workspaceObjectId,
           })
             .select("name description color status")
-            .sort({ score: { $meta: "textScore" } })
             .limit(5)
             .lean();
 
