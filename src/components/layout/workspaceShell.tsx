@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/layout/Sidebar";
 import CommandPalette from "@/components/search/command-palette";
-import { Menu, X } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 
 type Workspace = {
   _id: string;
@@ -42,8 +42,10 @@ export default function WorkspaceShell({
 }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const closeMobileMenu = () => setMobileOpen(false);
+  const closePalette = () => setPaletteOpen(false);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -54,9 +56,22 @@ export default function WorkspaceShell({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
 
+  useEffect(() => {
+    if (!paletteOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setPaletteOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [paletteOpen]);
+
   return (
     <div className="min-h-screen bg-background">
-      <CommandPalette workspaceSlug={workspaceSlug} />
+      <CommandPalette
+        workspaceSlug={workspaceSlug}
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+      />
 
       {/* Skip link */}
       <a
@@ -74,7 +89,6 @@ export default function WorkspaceShell({
         />
       )}
 
-      {/* Mobile menu button */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
@@ -85,6 +99,17 @@ export default function WorkspaceShell({
         )}
       >
         <Menu className="w-4 h-4" aria-hidden="true" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        aria-label="Open search"
+        className={cn(
+          "fixed top-3 right-3 z-50 p-2 rounded-md bg-background border shadow-sm md:hidden",
+        )}
+      >
+        <Search className="w-4 h-4" aria-hidden="true" />
       </button>
 
       <Sidebar
