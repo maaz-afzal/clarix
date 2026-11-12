@@ -55,6 +55,7 @@ export default async function AnalyticsPage({ params }: Props) {
       <ProjectSummary
         workspaceSlug={workspaceSlug}
         projectName={project.name}
+        projectId={projectId}
         stats={summaryStats}
       />
 
