@@ -212,7 +212,9 @@ export async function getRecentActivity(
 
     if (activities.length === 0) return [];
 
-    const projectIds = activities.map((a) => a.projectId).filter(Boolean);
+    const projectIds = activities
+      .map((a) => a.projectId)
+      .filter((id): id is mongoose.Types.ObjectId => id != null);
 
     const projects = await Project.find({ _id: { $in: projectIds } })
       .select("name")

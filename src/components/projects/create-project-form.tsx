@@ -45,7 +45,6 @@ export default function CreateProjectForm({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
       color: "#6366f1",
-      status: undefined,
     },
   });
 

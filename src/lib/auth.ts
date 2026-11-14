@@ -73,16 +73,18 @@ const authConfig: NextAuthConfig = {
 
     async signIn({ user, account }) {
       if (account?.provider === "google") {
+        const email = user.email?.toLowerCase();
+        if (!email) return false;
+
         try {
           await connectDB();
-
-          const existingUser = await User.findOne({ email: user.email });
+          const existingUser = await User.findOne({ email });
 
           if (!existingUser) {
             await User.create({
-              name: user.name,
-              email: user.email,
-              image: user.image,
+              name: user.name ?? email.split("@")[0],
+              email,
+              image: user.image ?? undefined,
               emailVerified: new Date(),
             });
           } else if (!existingUser.image && user.image) {

@@ -17,7 +17,7 @@ export const createProjectSchema = z.object({
     .default("#6366f1"),
 })
 
-export type CreateProjectInput = z.infer<typeof createProjectSchema>
+export type CreateProjectInput = z.input<typeof createProjectSchema>
 
 export const updateProjectSchema = createProjectSchema
   .omit({ color: true })
