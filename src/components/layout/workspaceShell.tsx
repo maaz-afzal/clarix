@@ -45,7 +45,6 @@ export default function WorkspaceShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const closeMobileMenu = () => setMobileOpen(false);
-  const closePalette = () => setPaletteOpen(false);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -57,13 +56,17 @@ export default function WorkspaceShell({
   }, [mobileOpen]);
 
   useEffect(() => {
-    if (!paletteOpen) return;
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setPaletteOpen(false);
+      if (e.key.toLowerCase() !== "k") return;
+      if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
+
+      e.preventDefault();
+      if (e.repeat) return;
+      setPaletteOpen((prev) => !prev);
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [paletteOpen]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +87,7 @@ export default function WorkspaceShell({
       {mobileOpen && (
         <button
           type="button"
-          onClick={closeMobileMenu}
+          onClick={() => setMobileOpen(false)}
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] md:hidden"
         />
       )}
