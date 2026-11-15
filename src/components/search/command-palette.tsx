@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/command";
 import type { SearchResult } from "@/lib/dal/search";
 
-type Status = "idle" | "loading" | "error";
 
 interface CommandPaletteProps {
   workspaceSlug: string;
