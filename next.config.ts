@@ -1,10 +1,15 @@
 import type { NextConfig } from "next";
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      { protocol: "https", hostname: "res.cloudinary.com" },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: cloudName ? `/${cloudName}/**` : "/**",
+      },
     ],
   },
   async headers() {
