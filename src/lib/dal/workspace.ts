@@ -49,35 +49,52 @@ export const getWorkspaceMembership = cache(
       console.error("Failed to fetch workspace membership:", error);
       throw new Error("Membership check failed");
     }
-  }
+  },
 );
 
 export async function getWorkspacesByUser(userId: string) {
   try {
     await connectDB();
 
-    const memberships = await WorkspaceMember.find({
-      userId: new mongoose.Types.ObjectId(userId),
-    }).lean();
-
-    if (memberships.length === 0) return [];
-
-    const workspaceIds = memberships.map((m) => m.workspaceId);
-    const workspaces = await Workspace.find({
-      _id: { $in: workspaceIds },
-    }).lean();
-
-    return workspaces.map((w) => {
-      const membership = memberships.find(
-        (m) => m.workspaceId.toString() === w._id.toString(),
-      );
-      return {
-        _id: w._id.toString(),
-        name: w.name,
-        slug: w.slug,
-        role: membership?.role ?? "member",
+    const rows = await WorkspaceMember.aggregate<{
+      role: string;
+      workspace: {
+        _id: mongoose.Types.ObjectId;
+        name: string;
+        slug: string;
       };
-    });
+    }>([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      { $sort: { joinedAt: 1 } },
+      {
+        $lookup: {
+          from: Workspace.collection.name,
+          localField: "workspaceId",
+          foreignField: "_id",
+          as: "workspace",
+        },
+      },
+      { $unwind: "$workspace" },
+      {
+        $project: {
+          role: 1,
+          "workspace._id": 1,
+          "workspace.name": 1,
+          "workspace.slug": 1,
+        },
+      },
+    ]);
+
+    return rows.map((r) => ({
+      _id: r.workspace._id.toString(),
+      name: r.workspace.name,
+      slug: r.workspace.slug,
+      role: r.role ?? "member",
+    }));
   } catch (error) {
     console.error("Failed to fetch user workspaces:", error);
     throw new Error("Failed to load workspaces");
