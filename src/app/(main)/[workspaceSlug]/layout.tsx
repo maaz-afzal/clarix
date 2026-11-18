@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireWorkspaceMember } from "@/lib/authorization";
+import { requireAuth, requireWorkspaceMember } from "@/lib/authorization";
 import { getWorkspacesByUser } from "@/lib/dal/workspace";
 import WorkspaceShell from "@/components/layout/workspaceShell";
 import { getProjectsForNav } from "@/lib/dal/project";
@@ -13,10 +13,14 @@ type Props = {
 export default async function WorkspaceLayout({ children, params }: Props) {
   const { workspaceSlug } = await params;
 
-  const { user, membership } = await requireWorkspaceMember(workspaceSlug);
+  const user = await requireAuth();
 
-  const [workspaces, navProjects, unreadCount] = await Promise.all([
+  const [{ membership }, workspaces] = await Promise.all([
+    requireWorkspaceMember(workspaceSlug),
     getWorkspacesByUser(user.id),
+  ]);
+
+  const [navProjects, unreadCount] = await Promise.all([
     getProjectsForNav(membership.workspaceId),
     getUnreadCount(user.id, membership.workspaceId),
   ]);
