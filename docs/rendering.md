@@ -227,5 +227,81 @@ console.log(
 
 ---
 
+
+## Dashboard request: query trace (before)
+[mongo +20925ms] workspaces.findOne
+[mongo +20927ms] workspacemembers.findOne
+[mongo +20928ms] workspacemembers.find
+[mongo +20928ms] projects.find
+[mongo +20928ms] notifications.countDocuments
+[mongo +20932ms] projects.countDocuments
+[mongo +20932ms] tasks.countDocuments
+[mongo +20932ms] tasks.countDocuments
+[mongo +20933ms] tasks.countDocuments
+[mongo +20933ms] projects.find
+[mongo +20934ms] tasks.find
+[mongo +20934ms] tasks.find
+[mongo +20934ms] activities.find
+[mongo +20938ms] workspaces.find
+[mongo +20943ms] users.find
+[mongo +20946ms] tasks.aggregate
+[mongo +20970ms] projects.find
+[mongo +21016ms] projects.find
+[mongo +21331ms] projects.findOne
+[mongo +21341ms] projects.findOne
+[mongo +21349ms] tasks.findOne
+[mongo +21355ms] tasks.findOne
+[mongo +21360ms] users.find
+[mongo +21362ms] users.find
+[mongo +21370ms] workspaces.findOne
+[mongo +21371ms] workspaces.findOne
+[mongo +21373ms] workspacemembers.findOne
+[mongo +21375ms] workspacemembers.findOne
+[mongo +21395ms] tasks.findOne
+[mongo +21401ms] tasks.findOne
+[mongo +21408ms] users.find
+[mongo +21410ms] users.find
+[mongo +21429ms] tasks.findOne
+[mongo +21435ms] users.find
+[mongo +21476ms] workspaces.findOne
+[mongo +21478ms] workspacemembers.findOne
+
+## Dashboard request: query trace (after)
+[mongo +22344ms] workspacemembers.aggregate
+[mongo +22345ms] workspaces.findOne
+[mongo +22349ms] workspacemembers.findOne
+[mongo +22355ms] projects.find
+[mongo +22356ms] notifications.countDocuments
+[mongo +22365ms] projects.countDocuments
+[mongo +22366ms] tasks.countDocuments
+[mongo +22367ms] tasks.countDocuments
+[mongo +22368ms] tasks.countDocuments
+[mongo +22369ms] projects.find
+[mongo +22369ms] tasks.find
+[mongo +22370ms] tasks.find
+[mongo +22371ms] activities.find
+[mongo +22397ms] tasks.aggregate
+[mongo +22411ms] projects.find
+[mongo +22445ms] users.find
+[mongo +22468ms] projects.find
+[mongo +23184ms] projects.findOne
+[mongo +23198ms] projects.findOne
+[mongo +23220ms] workspaces.findOne
+[mongo +23224ms] workspaces.findOne
+[mongo +23233ms] tasks.findOne
+[mongo +23236ms] workspacemembers.findOne
+[mongo +23242ms] workspacemembers.findOne
+[mongo +23245ms] users.find
+[mongo +23253ms] tasks.findOne
+[mongo +23262ms] users.find
+[mongo +23307ms] tasks.findOne
+[mongo +23323ms] tasks.findOne
+[mongo +23331ms] users.find
+[mongo +23338ms] tasks.findOne
+[mongo +23346ms] users.find
+[mongo +23360ms] users.find
+[mongo +23455ms] workspaces.findOne
+[mongo +23461ms] workspacemembers.findOne
+
 *Generated: $(date)*
 *Next.js: 16.3.4 | React: 19 | MongoDB: Mongoose*
