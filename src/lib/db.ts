@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+if (process.env.MONGOOSE_DEBUG === "1") {
+  mongoose.set("debug", (collection: string, method: string) => {
+    console.log(`[mongo +${Math.round(performance.now())}ms] ${collection}.${method}`);
+  });
+}
+
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
