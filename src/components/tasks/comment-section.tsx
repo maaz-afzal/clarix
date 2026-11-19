@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send, Trash2, MessageSquare } from "lucide-react";
@@ -36,6 +37,7 @@ export default function CommentSection({
   currentUserImage,
   currentUserRole,
 }: CommentSectionProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -55,6 +57,7 @@ export default function CommentSection({
         return;
       }
       reset();
+      router.refresh();
     });
   }
 
