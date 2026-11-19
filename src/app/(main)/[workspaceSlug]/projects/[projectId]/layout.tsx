@@ -5,10 +5,15 @@ import ProjectHeader from "@/components/projects/project-header";
 
 type Props = {
   children: React.ReactNode;
+  modal: React.ReactNode;
   params: Promise<{ workspaceSlug: string; projectId: string }>;
 };
 
-export default async function ProjectLayout({ children, params }: Props) {
+export default async function ProjectLayout({
+  children,
+  modal,
+  params,
+}: Props) {
   const { workspaceSlug, projectId } = await params;
 
   const { membership } = await requireWorkspaceMember(workspaceSlug);
@@ -26,6 +31,7 @@ export default async function ProjectLayout({ children, params }: Props) {
         projectId={projectId}
       />
       <div className="flex-1 overflow-hidden">{children}</div>
+      {modal}
     </div>
   );
 }
