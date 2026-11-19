@@ -18,8 +18,6 @@ src/app/(main)/[workspaceSlug]/
 │       ├── board/page.tsx        # Kanban board
 │       └── list/page.tsx         # Task list view
 ├── dashboard/page.tsx
-├── tasks/page.tsx
-├── tasks/[taskId]/page.tsx
 ├── search/page.tsx
 └── notifications/page.tsx
 ```
@@ -28,22 +26,26 @@ src/app/(main)/[workspaceSlug]/
 
 ## Test 4: Modal Open + F5 Refresh
 
-**Behavior**: When modal is open and F5 is pressed, the full task page loads (not the modal).
+### Observed in browser
+When modal is open and F5 is pressed, the full task page loads (not the modal).
 
-**Why**: F5 triggers a hard navigation (full page reload). The browser requests the actual URL `/projects/[projectId]/tasks/[taskId]`, which matches the page route, not the intercepted route. The interception only works for client-side navigation (Next.js router.push/Link).
+### Reasoned from code
+F5 triggers a hard navigation (full page reload). The browser requests the actual URL `/projects/[projectId]/tasks/[taskId]`, which matches the page route, not the intercepted route. The interception only works for client-side navigation (Next.js router.push/Link).
 
 ---
 
 ## Test 6: Dashboard/Search/Notifications → Task Link
 
-**Observation**: Clicking a task link from Dashboard, Search, or Notifications opens the **full page**, not the modal.
+### Observed in browser
+Clicking a task link from Dashboard, Search, or Notifications opens the **full page**, not the modal.
+
+### Reasoned from code
+These pages are **outside** the `projects/[projectId]/layout.tsx` that defines the `@modal` slot. Interception only works for navigations that originate from within the same layout segment. Since Dashboard, Search, and Notifications are siblings of `projects/[projectId]` in the route tree, their links target the actual page route, not the intercepted modal route.
 
 **Evidence from code**:
-- **Dashboard** (`overdue-tasks.tsx:35`, `my-tasks.tsx:42`): `href={`/${workspaceSlug}/projects/${task.projectId}/tasks/${task._id}`}`
-- **Search** (`search-results.tsx:82`): `href={`/${workspaceSlug}/projects/${task.projectId}/tasks/${task._id}`}`
-- **Notifications** (`notification-list.tsx:122`): `href={notification.link}` where link is set to full page URL in `notifications.ts:65`
-
-**Why**: These pages are **outside** the `projects/[projectId]/layout.tsx` that defines the `@modal` slot. Interception only works for navigations that originate from within the same layout segment. Since Dashboard, Search, and Notifications are siblings of `projects/[projectId]` in the route tree, their links target the actual page route, not the intercepted modal route.
+- Dashboard (`overdue-tasks.tsx:35`, `my-tasks.tsx:42`): `href={`/${workspaceSlug}/projects/${task.projectId}/tasks/${task._id}`}`
+- Search (`search-results.tsx:82`): `href={`/${workspaceSlug}/projects/${task.projectId}/tasks/${task._id}`}`
+- Notifications (`notification-list.tsx:122`): `href={notification.link}` where link is set to full page URL in `notifications.ts:65`
 
 **Result**: ✅ Full page opens (expected behavior for cross-section navigation)
 
@@ -51,25 +53,28 @@ src/app/(main)/[workspaceSlug]/
 
 ## Test 8: Modal Comment Add → List Update
 
-**Observation**: After adding a comment in the modal, the new comment does **not** appear in the list immediately.
+### Observed in browser
+After adding a comment in the modal, the new comment does **not** appear in the list immediately.
 
-**Root Cause**: The `addComment` action uses `revalidatePath` with the full page URL:
-```typescript
-// actions/comment.ts:57-59
-revalidatePath(`/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${taskId}`);
-```
+### Fix applied
+Added `router.refresh()` after `reset()` in `comment-section.tsx:60` to force a client-side re-fetch of the server component data.
 
-However, the modal is rendered at the intercepted route `/projects/[projectId]/@modal/(.)tasks/[taskId]`, which is a **different path**. `revalidatePath` only invalidates the specific path given, so the intercepted view doesn't revalidate.
+### Root Cause
+Hypothesis (not verified): The `revalidatePath` in the server action targets the page route, but the intercepted modal route may have a separate cache entry. `router.refresh()` forces re-fetch of the current route's server components regardless of cache.
 
-**Fix Applied**: Added `router.refresh()` after `reset()` in `comment-section.tsx` to force a client-side re-fetch of the server component data.
+---
 
-```typescript
-// comment-section.tsx:57
-reset();
-router.refresh();
-```
+## Additional Observations
 
-This triggers a fresh request for the intercepted route's server component, which re-fetches comments.
+### ProjectHeader active tab state
+**Observed in browser**: When modal is open, no tab in ProjectHeader shows as active.
+
+**Reasoned from code**: The modal URL is `/projects/[projectId]/tasks/[taskId]`, which doesn't match any of the ProjectHeader tab paths (board, list, analytics). The header's active state logic only checks for those specific paths.
+
+### Modal open latency
+**Observed in browser**: Modal appears within ~100-200ms after clicking a task card on the board/list.
+
+**Reasoned from code**: The intercepted route uses a server component (`@modal/(.)tasks/[taskId]/page.tsx`) which must fetch task data before streaming the response. The `loading.tsx` skeleton shows immediately while the server component resolves.
 
 ---
 
@@ -97,14 +102,3 @@ This triggers a fresh request for the intercepted route's server component, whic
 ### Loading States
 - `tasks/[taskId]/loading.tsx` → Full page skeleton
 - `@modal/(.)tasks/[taskId]/loading.tsx` → Modal skeleton (inside TaskModal)
-
-### Cache Behavior
-- Server components are cached by path
-- `revalidatePath` invalidates by exact path match
-- Intercepted route has different path → separate cache entry
-- `router.refresh()` forces re-fetch of current route's server components
-
----
-
-*Generated: 2026-11-19*
-*Next.js: 16.3.4 | React: 19*
