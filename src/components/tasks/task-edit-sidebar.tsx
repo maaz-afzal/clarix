@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useId, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { updateTask } from "@/actions/task";
 import { updateTaskSchema, type UpdateTaskInput } from "@/lib/validations/task";
@@ -35,6 +33,7 @@ export default function TaskEditSidebar({
   members,
   workspaceSlug,
 }: TaskEditSidebarProps) {
+  const uid = useId();
   const [isPending, startTransition] = useTransition();
   const [localValues, setLocalValues] = useState<Partial<UpdateTaskInput>>({});
 
@@ -51,25 +50,19 @@ export default function TaskEditSidebar({
   };
 
   function onFieldChange(field: keyof UpdateTaskInput, value: string) {
-    setLocalValues((prev) => ({ ...prev, [field]: value || undefined }));
+    setLocalValues((prev) => ({ ...prev, [field]: value }));
     startTransition(async () => {
       const result = await updateTask(workspaceSlug, task._id, {
-        [field]: value || undefined,
+        [field]: value,
       });
       if (!result.success) {
-        toast.error(result.error || "Could not update task");
-        setLocalValues((prev) => {
-          const next = { ...prev };
-          delete next[field];
-          return next;
-        });
-      } else {
-        setLocalValues((prev) => {
-          const next = { ...prev };
-          delete next[field];
-          return next;
-        });
+        toast.error(result.error ?? "Could not update task");
       }
+      setLocalValues((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
     });
   }
 
@@ -77,10 +70,11 @@ export default function TaskEditSidebar({
     <div className="space-y-4 text-sm">
       {/* Status */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <label htmlFor={`${uid}-status`} className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Status
         </label>
         <select
+          id={`${uid}-status`}
           value={getValue("status")}
           disabled={isPending}
           onChange={(e) => onFieldChange("status", e.target.value)}
@@ -97,18 +91,19 @@ export default function TaskEditSidebar({
       {/* Priority */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <label htmlFor={`${uid}-priority`} className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Priority
           </label>
           <PrioritySuggester
             workspaceSlug={workspaceSlug}
             taskTitle={task.title}
             taskDescription={task.description}
-            currentPriority={task.priority}
+            currentPriority={getValue("priority") as string}
             onAccept={(p) => onFieldChange("priority", p)}
           />
         </div>
         <select
+          id={`${uid}-priority`}
           value={getValue("priority")}
           disabled={isPending}
           onChange={(e) => onFieldChange("priority", e.target.value)}
@@ -124,10 +119,11 @@ export default function TaskEditSidebar({
 
       {/* Assignee */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <label htmlFor={`${uid}-assignee`} className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Assignee
         </label>
         <select
+          id={`${uid}-assignee`}
           value={getValue("assigneeId")}
           disabled={isPending}
           onChange={(e) => onFieldChange("assigneeId", e.target.value)}
@@ -144,10 +140,11 @@ export default function TaskEditSidebar({
 
       {/* Due Date */}
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <label htmlFor={`${uid}-due`} className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Due Date
         </label>
         <input
+          id={`${uid}-due`}
           type="date"
           value={getValue("dueDate")}
           disabled={isPending}
