@@ -49,10 +49,16 @@
     canManage,
   }: KanbanBoardProps) {
     const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
+    const [prevInitialTasks, setPrevInitialTasks] = useState<TaskItem[]>(initialTasks);
     const [activeTask, setActiveTask] = useState<TaskItem | null>(null);
     const [isPending, startTransition] = useTransition();
 
     const snapshotRef = useRef<TaskItem[]>(initialTasks);
+
+    if (initialTasks !== prevInitialTasks) {
+      setPrevInitialTasks(initialTasks);
+      if (!activeTask) setTasks(initialTasks);
+    }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
