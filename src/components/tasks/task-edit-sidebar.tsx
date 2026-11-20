@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
@@ -36,25 +36,40 @@ export default function TaskEditSidebar({
   workspaceSlug,
 }: TaskEditSidebarProps) {
   const [isPending, startTransition] = useTransition();
+  const [localValues, setLocalValues] = useState<Partial<UpdateTaskInput>>({});
 
-  const { register, handleSubmit } = useForm<UpdateTaskInput>({
-    resolver: zodResolver(updateTaskSchema),
-    defaultValues: {
-      status: task.status,
-      priority: task.priority,
-      assigneeId: task.assigneeId ?? "",
-      dueDate: task.dueDate
-        ? new Date(task.dueDate).toISOString().split("T")[0]
-        : "",
-    },
-  });
+  const getValue = (field: keyof UpdateTaskInput) => {
+    const local = localValues[field];
+    if (local !== undefined) return local;
+    switch (field) {
+      case "status": return task.status;
+      case "priority": return task.priority;
+      case "assigneeId": return task.assigneeId ?? "";
+      case "dueDate": return task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "";
+      default: return "";
+    }
+  };
 
   function onFieldChange(field: keyof UpdateTaskInput, value: string) {
+    setLocalValues((prev) => ({ ...prev, [field]: value || undefined }));
     startTransition(async () => {
       const result = await updateTask(workspaceSlug, task._id, {
         [field]: value || undefined,
       });
-      if (!result.success) toast.error(result.error || "Could not update task");
+      if (!result.success) {
+        toast.error(result.error || "Could not update task");
+        setLocalValues((prev) => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      } else {
+        setLocalValues((prev) => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      }
     });
   }
 
@@ -66,7 +81,7 @@ export default function TaskEditSidebar({
           Status
         </label>
         <select
-          defaultValue={task.status}
+          value={getValue("status")}
           disabled={isPending}
           onChange={(e) => onFieldChange("status", e.target.value)}
           className="w-full px-3 py-2 border rounded-lg text-sm bg-background disabled:opacity-50"
@@ -94,7 +109,7 @@ export default function TaskEditSidebar({
           />
         </div>
         <select
-          defaultValue={task.priority}
+          value={getValue("priority")}
           disabled={isPending}
           onChange={(e) => onFieldChange("priority", e.target.value)}
           className="w-full px-3 py-2 border rounded-lg text-sm bg-background disabled:opacity-50"
@@ -113,7 +128,7 @@ export default function TaskEditSidebar({
           Assignee
         </label>
         <select
-          defaultValue={task.assigneeId ?? ""}
+          value={getValue("assigneeId")}
           disabled={isPending}
           onChange={(e) => onFieldChange("assigneeId", e.target.value)}
           className="w-full px-3 py-2 border rounded-lg text-sm bg-background disabled:opacity-50"
@@ -134,11 +149,7 @@ export default function TaskEditSidebar({
         </label>
         <input
           type="date"
-          defaultValue={
-            task.dueDate
-              ? new Date(task.dueDate).toISOString().split("T")[0]
-              : ""
-          }
+          value={getValue("dueDate")}
           disabled={isPending}
           onChange={(e) => onFieldChange("dueDate", e.target.value)}
           className="w-full px-3 py-2 border rounded-lg text-sm bg-background disabled:opacity-50"

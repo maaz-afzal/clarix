@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useOptimistic } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Plus, X, ClipboardList } from "lucide-react";
+import { Plus, X, ClipboardList, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { updateTask, deleteTask } from "@/actions/task";
@@ -64,6 +64,19 @@ export default function TaskListView({
       ),
   );
 
+  const [optimisticTasksWithDelete, setOptimisticDelete] = useOptimistic(
+    optimisticTasks,
+    (current: TaskItem[], update: { taskId: string; deleted?: boolean; task?: TaskItem }) => {
+      if (update.deleted) {
+        return current.filter((t) => t._id !== update.taskId);
+      }
+      if (update.task) {
+        return [...current, update.task];
+      }
+      return current;
+    },
+  );
+
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
@@ -98,10 +111,23 @@ export default function TaskListView({
 
   function handleDelete(taskId: string) {
     if (!confirm("Are you sure you want to delete this task?")) return;
+
+    const deletedTask = optimisticTasksWithDelete.find((t) => t._id === taskId);
+
     startTransition(async () => {
-      const result = await deleteTask(workspaceSlug, taskId);
-      if (!result.success) toast.error(result.error || "Failed to delete task");
-      else toast.success("Task deleted successfully");
+      setOptimisticDelete({ taskId, deleted: true });
+      try {
+        const result = await deleteTask(workspaceSlug, taskId);
+        if (!result.success) {
+          toast.error(result.error || "Failed to delete task");
+          if (deletedTask) setOptimisticDelete({ taskId, task: deletedTask });
+        } else {
+          toast.success("Task deleted successfully");
+        }
+      } catch {
+        toast.error("Connection lost. Please try again.");
+        if (deletedTask) setOptimisticDelete({ taskId, task: deletedTask });
+      }
     });
   }
 
@@ -241,7 +267,7 @@ export default function TaskListView({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {optimisticTasks.map((task) => {
+              {optimisticTasksWithDelete.map((task) => {
                 const isOverdue =
                   task.dueDate &&
                   new Date(task.dueDate) < new Date() &&
@@ -333,7 +359,7 @@ export default function TaskListView({
                           disabled={isPending}
                           className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
                         >
-                          Delete
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     )}
