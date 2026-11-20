@@ -16,6 +16,7 @@
   import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
   import toast from "react-hot-toast";
   import { updateTaskPositions } from "@/actions/task";
+  import { callAction } from "@/lib/call-action";
   import KanbanColumn from "./kanban-column";
   import TaskCard from "./task-card";
   import type { TaskItem } from "@/lib/dal/task";
@@ -170,12 +171,14 @@
       );
 
       startTransition(async () => {
-        const result = await updateTaskPositions(workspaceSlug, [
-          { taskId: activeId, position: newPosition, status: targetStatus },
-        ]);
+        const result = await callAction(() =>
+          updateTaskPositions(workspaceSlug, [
+            { taskId: activeId, position: newPosition, status: targetStatus },
+          ]),
+        );
 
         if (!result.success) {
-          toast.error("Position save nahi ho saka");
+          toast.error(result.error ?? "Could not save task position");
           setTasks(snapshotRef.current);
         }
       });

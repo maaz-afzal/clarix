@@ -6,6 +6,7 @@ import { Plus, X, ClipboardList, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn, formatDate } from "@/lib/utils";
 import { updateTask, deleteTask } from "@/actions/task";
+import { callAction } from "@/lib/call-action";
 import type { TaskItem } from "@/lib/dal/task";
 import type { MemberWithUser } from "@/lib/dal/members";
 import CreateTaskForm from "./create-task-form";
@@ -98,13 +99,9 @@ export default function TaskListView({
 
     startTransition(async () => {
       setOptimisticStatus({ taskId, status });
-      try {
-        const result = await updateTask(workspaceSlug, taskId, { status });
-        if (!result.success) {
-          toast.error(result.error || "Failed to update task status");
-        }
-      } catch {
-        toast.error("Connection lost. Please try again.");
+      const result = await callAction(() => updateTask(workspaceSlug, taskId, { status }));
+      if (!result.success) {
+        toast.error(result.error ?? "Failed to update task status");
       }
     });
   }
@@ -116,17 +113,12 @@ export default function TaskListView({
 
     startTransition(async () => {
       setOptimisticDelete({ taskId, deleted: true });
-      try {
-        const result = await deleteTask(workspaceSlug, taskId);
-        if (!result.success) {
-          toast.error(result.error || "Failed to delete task");
-          if (deletedTask) setOptimisticDelete({ taskId, task: deletedTask });
-        } else {
-          toast.success("Task deleted successfully");
-        }
-      } catch {
-        toast.error("Connection lost. Please try again.");
+      const result = await callAction(() => deleteTask(workspaceSlug, taskId));
+      if (!result.success) {
+        toast.error(result.error ?? "Failed to delete task");
         if (deletedTask) setOptimisticDelete({ taskId, task: deletedTask });
+      } else {
+        toast.success("Task deleted successfully");
       }
     });
   }
