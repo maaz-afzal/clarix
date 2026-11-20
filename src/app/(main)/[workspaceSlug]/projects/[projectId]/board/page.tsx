@@ -42,6 +42,7 @@ export default async function BoardPage({ params }: Props) {
       projectId={projectId}
       currentUserId={user.id}
       canManage={canManage}
+      role={membership.role}
     />
   );
 }

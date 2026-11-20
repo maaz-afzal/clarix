@@ -35,6 +35,7 @@ interface KanbanColumnProps {
   projectId: string;
   members: MemberWithUser[];
   canManage: boolean;
+  canDragTask: (task: TaskItem) => boolean;
 }
 
 export default function KanbanColumn({
@@ -44,6 +45,7 @@ export default function KanbanColumn({
   projectId,
   members,
   canManage,
+  canDragTask,
 }: KanbanColumnProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -96,6 +98,7 @@ export default function KanbanColumn({
                 task={task}
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
+                canDrag={canDragTask(task)}
               />
             ))}
           </div>

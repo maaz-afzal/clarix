@@ -9,9 +9,10 @@ interface SortableTaskCardProps {
   task: TaskItem;
   workspaceSlug: string;
   projectId: string;
+  canDrag: boolean;
 }
 
-export default function SortableTaskCard({ task, workspaceSlug, projectId }: SortableTaskCardProps) {
+export default function SortableTaskCard({ task, workspaceSlug, projectId, canDrag }: SortableTaskCardProps) {
   const {
     attributes,
     listeners,
@@ -19,7 +20,7 @@ export default function SortableTaskCard({ task, workspaceSlug, projectId }: Sor
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task._id });
+  } = useSortable({ id: task._id, disabled: !canDrag });
 
   const style = {
     transform: CSS.Transform.toString(transform),

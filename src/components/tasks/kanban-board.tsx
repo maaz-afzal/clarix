@@ -39,6 +39,7 @@
     projectId: string;
     currentUserId: string;
     canManage: boolean;
+    role: string;
   }
 
   export default function KanbanBoard({
@@ -48,6 +49,7 @@
     projectId,
     currentUserId,
     canManage,
+    role,
   }: KanbanBoardProps) {
     const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
     const [prevInitialTasks, setPrevInitialTasks] = useState<TaskItem[]>(initialTasks);
@@ -71,6 +73,16 @@
   )
 
     
+
+    const canDragTask = useCallback(
+      (task: TaskItem) => {
+        if (role === "owner" || role === "admin") return true;
+        if (task.createdBy === currentUserId) return true;
+        if (task.assigneeId === currentUserId) return true;
+        return false;
+      },
+      [currentUserId, role],
+    );
 
     const getTasksByStatus = useCallback(
       (status: TaskStatus) => tasks.filter((t) => t.status === status),
@@ -228,6 +240,7 @@
                   projectId={projectId}
                   members={members}
                   canManage={canManage}
+                  canDragTask={canDragTask}
                 />
               ))}
             </div>
