@@ -37,7 +37,7 @@ export default async function InvitePage({ params }: Props) {
           href="/"
           className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm"
         >
-          Home pe jao
+          Go to Home
         </Link>
       </div>
     </div>

@@ -42,7 +42,7 @@ export default function NotificationList({
     if (unreadCount === 0) return;
     startTransition(async () => {
       const result = await markAllRead(workspaceSlug, workspaceId);
-      if (!result.success) toast.error("Mark nahi ho saka");
+      if (!result.success) toast.error("Could not mark as read");
     });
   }
 

@@ -132,7 +132,7 @@ export async function generateProjectSummary(
     if (!projectName || stats.total === 0) {
       return {
         success: false,
-        error: "Project mein tasks hone chahiye summary ke liye",
+        error: "Project must have tasks to generate a summary",
       };
     }
 
