@@ -1,24 +1,50 @@
 # Authorization Rules
 
-## Current State (Mismatch)
+## Shared Task Modify Rule
 
-| Action | Rule |
-|--------|------|
-| `updateTask` (sidebar, list select) | Only task creator (`task_update_own`) or admin/owner (`task_update_any`) can update. Members cannot update others' tasks. |
-| `updateTaskPositions` (Kanban drag) | **Any workspace member** can change any task's status/position. No creator check. |
+**Function:** `canModifyTask(task, userId, role)` in `src/lib/authorization.ts`
 
-## Correct Rule
+**Rule:** A user can modify a task (change status) if they are:
+1. **Owner or Admin** (has `task_update_any` permission), OR
+2. **Task Creator** (`task.createdBy === userId`), OR
+3. **Task Assignee** (`task.assigneeId === userId`)
 
-**Only the task creator (or admin/owner) should be able to change a task's status.**
+**Why include assignee?**
+- If an admin assigns a task to a member, that member should be able to update it (status, priority, etc.)
+- Without this, assigned members couldn't move their own tasks to "Done"
+- Product decision: assignee shares ownership for updates
 
-**Why:**
-- Status changes are semantic updates to task ownership/progress, not just visual reordering.
-- Allowing any member to move any task to "Done" or change status breaks accountability.
-- The Kanban drag is a UI affordance for the same action (`status` field update) — it must enforce the same permission.
-- `updateTaskPositions` should verify `task_update_own` / `task_update_any` before applying status changes, same as `updateTask`.
+## Where Used
 
-## Fix Required (Not Applied Yet)
+| Location | Purpose |
+|----------|---------|
+| `verifyTaskAccess` (authorization.ts) | Validates `update` action for sidebar, list view, page |
+| `updateTaskPositions` (actions/task.ts) | Validates status changes during Kanban drag (position-only changes allowed for all) |
 
-In `updateTaskPositions` (actions/task.ts), add creator/admin check before allowing status change:
-- If `u.status !== current.status`, verify `hasPermission(role, "task_update_any")` OR `current.createdBy === userId`.
-- Position-only changes within same column can remain open to all members (reordering).
+## Permission Matrix
+
+| Role | Change Status | Reorder (Same Column) | Delete |
+|------|---------------|----------------------|--------|
+| Owner | ✅ | ✅ | ✅ |
+| Admin | ✅ | ✅ | ✅ |
+| Member (Creator) | ✅ | ✅ | ❌ |
+| Member (Assignee) | ✅ | ✅ | ❌ |
+| Member (Other) | ❌ | ✅ | ❌ |
+
+- **Change Status**: Moving between columns (Todo → In Progress, etc.)
+- **Reorder (Same Column)**: Drag up/down within same status column
+- **Delete**: Only Owner/Admin
+
+## Fix Applied
+
+1. **`verifyTaskAccess`** - Now uses `canModifyTask` for `update` action. Also returns `NOT_FOUND` for missing/other-workspace tasks (hides existence).
+2. **`updateTaskPositions`** - Pre-checks all updates: if any status change violates `canModifyTask`, entire batch rejected with `FORBIDDEN`. Position-only changes within same column still allowed for all members.
+3. **`callAction`** helper - Catches network errors in client, shows server's actual error message (e.g., "You do not have permission to do this").
+
+## Hinglish → English Strings Fixed
+
+| File | Before | After |
+|------|--------|-------|
+| `notification-list.tsx:45` | "Mark nahi ho saka" | "Could not mark as read" |
+| `invite/[token]/page.tsx:40` | "Home pe jao" | "Go to Home" |
+| `actions/ai.ts:135` | "Project mein tasks hone chahiye summary ke liye" | "Project must have tasks to generate a summary" |
