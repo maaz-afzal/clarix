@@ -4,6 +4,7 @@ import Task from "@/models/Task";
 import { redirect } from "next/navigation";
 import connectDB from "@/lib/db";
 import { cache } from "react";
+import mongoose from "mongoose";
 
 export type MemberRole = "owner" | "admin" | "member";
 
@@ -32,6 +33,21 @@ export function hasPermission(
   permission: Permission,
 ): boolean {
   return (PERMISSIONS[permission] as readonly string[]).includes(role);
+}
+
+interface TaskOwnership {
+  createdBy: { toString(): string };
+  assigneeId?: { toString(): string } | null;
+}
+
+export function canModifyTask(
+  task: TaskOwnership,
+  userId: string,
+  role: MemberRole,
+): boolean {
+  if (hasPermission(role, "task_update_any")) return true;
+  if (task.createdBy.toString() === userId) return true;
+  return task.assigneeId?.toString() === userId;
 }
 
 export const requireAuth = cache(async () => {
@@ -117,32 +133,24 @@ export async function verifyTaskAccess(
 
   await connectDB();
 
+  if (!mongoose.isValidObjectId(taskId)) {
+    throw new Error("NOT_FOUND");
+  }
+
   const task = await Task.findById(taskId);
 
-  if (!task) {
-    throw new Error("Task not found");
+  if (!task || task.workspaceId.toString() !== membership.workspaceId) {
+    throw new Error("NOT_FOUND");
   }
 
-  if (task.workspaceId.toString() !== membership.workspaceId) {
-    throw new Error("Task does not belong to this workspace");
+  const role = membership.role as MemberRole;
+
+  if (action === "delete" && !hasPermission(role, "task_delete")) {
+    throw new Error("FORBIDDEN");
   }
 
-  if (action === "delete") {
-    if (!hasPermission(membership.role as MemberRole, "task_delete")) {
-      throw new Error("FORBIDDEN");
-    }
-  }
-
-  if (action === "update") {
-    const isTaskCreator = task.createdBy.toString() === userId;
-
-    if (isTaskCreator) {
-      return task;
-    }
-
-    if (!hasPermission(membership.role as MemberRole, "task_update_any")) {
-      throw new Error("FORBIDDEN");
-    }
+  if (action === "update" && !canModifyTask(task, userId, role)) {
+    throw new Error("FORBIDDEN");
   }
 
   return task;

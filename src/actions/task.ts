@@ -8,7 +8,10 @@ import {
   verifyPermission,
   verifyTaskAccess,
   verifyWorkspaceMember,
+  canModifyTask,
+  type MemberRole,
 } from "@/lib/authorization";
+import { ERROR_MESSAGES } from "@/lib/errors";
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -89,7 +92,9 @@ export async function createTask(
         assigneeId: result.data.assigneeId
           ? new mongoose.Types.ObjectId(result.data.assigneeId)
           : undefined,
-        dueDate: result.data.dueDate ? new Date(result.data.dueDate) : undefined,
+        dueDate: result.data.dueDate
+          ? new Date(result.data.dueDate)
+          : undefined,
         createdBy: new mongoose.Types.ObjectId(userId),
         position,
         completedAt: result.data.status === "done" ? new Date() : undefined,
@@ -128,7 +133,7 @@ export async function updateTask(
     }
     const session = await auth();
     const userId = session!.user!.id!;
-    
+
     try {
       await connectDB();
 
@@ -231,14 +236,15 @@ export async function updateTaskPositions(
   updates: { taskId: string; position: number; status: string }[],
 ): Promise<TaskActionResult> {
   return safeAction(async () => {
-    const { membership } = await verifyWorkspaceMember(workspaceSlug);
+    const { userId, membership } = await verifyWorkspaceMember(workspaceSlug);
+    const role = membership.role as MemberRole;
 
     const validStatuses = ["todo", "in-progress", "in-review", "done"];
     const cleaned = updates.filter(
       (u) =>
         mongoose.isValidObjectId(u.taskId) &&
         validStatuses.includes(u.status) &&
-        Number.isFinite(u.position)
+        Number.isFinite(u.position),
     );
 
     if (cleaned.length === 0) return { success: true };
@@ -246,15 +252,25 @@ export async function updateTaskPositions(
     try {
       await connectDB();
 
-      // Sirf is workspace ke tasks, doosre workspace ke IDs yahin filter ho jayenge
       const existing = await Task.find({
         _id: { $in: cleaned.map((u) => u.taskId) },
         workspaceId: new mongoose.Types.ObjectId(membership.workspaceId),
       })
-        .select("completedAt")
+        .select("completedAt status createdBy assigneeId")
         .lean();
 
       const byId = new Map(existing.map((t) => [t._id.toString(), t]));
+
+      for (const u of cleaned) {
+        const current = byId.get(u.taskId);
+        if (!current) continue;
+        if (
+          u.status !== current.status &&
+          !canModifyTask(current, userId, role)
+        ) {
+          return { success: false, error: ERROR_MESSAGES.FORBIDDEN };
+        }
+      }
 
       const ops = cleaned.flatMap((u) => {
         const current = byId.get(u.taskId);
@@ -270,7 +286,9 @@ export async function updateTaskPositions(
           $set.completedAt = null;
         }
 
-        return [{ updateOne: { filter: { _id: current._id }, update: { $set } } }];
+        return [
+          { updateOne: { filter: { _id: current._id }, update: { $set } } },
+        ];
       });
 
       if (ops.length > 0) await Task.bulkWrite(ops);
