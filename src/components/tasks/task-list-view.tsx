@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useOptimistic } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Plus, X, ClipboardList } from "lucide-react";
 import toast from "react-hot-toast";
@@ -53,6 +53,17 @@ export default function TaskListView({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const [optimisticTasks, setOptimisticStatus] = useOptimistic(
+    tasks,
+    (
+      current: TaskItem[],
+      update: { taskId: string; status: TaskItem["status"] },
+    ) =>
+      current.map((t) =>
+        t._id === update.taskId ? { ...t, status: update.status } : t,
+      ),
+  );
+
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
@@ -70,12 +81,18 @@ export default function TaskListView({
     searchParams.has("assignee");
 
   function handleStatusChange(taskId: string, newStatus: string) {
+    const status = newStatus as TaskItem["status"];
+
     startTransition(async () => {
-      const result = await updateTask(workspaceSlug, taskId, {
-        status: newStatus as TaskItem["status"],
-      });
-      if (!result.success)
-        toast.error(result.error || "Failed to update task status");
+      setOptimisticStatus({ taskId, status });
+      try {
+        const result = await updateTask(workspaceSlug, taskId, { status });
+        if (!result.success) {
+          toast.error(result.error || "Failed to update task status");
+        }
+      } catch {
+        toast.error("Connection lost. Please try again.");
+      }
     });
   }
 
@@ -191,17 +208,16 @@ export default function TaskListView({
                   ? "Create your first task to get started."
                   : "There are no tasks in this project yet."
             }
-            children={
-              !hasFilters && canManage && (
-                <button
-                  onClick={() => setShowCreateForm(true)}
-                  className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-                >
-                  Create First Task
-                </button>
-              )
-            }
-          />
+          >
+            {!hasFilters && canManage && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+              >
+                Create First Task
+              </button>
+            )}
+          </EmptyState>
         ) : (
           <table className="w-full min-w-180 text-sm">
             <thead className="border-b bg-muted/30 sticky top-0">
@@ -225,7 +241,7 @@ export default function TaskListView({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {tasks.map((task) => {
+              {optimisticTasks.map((task) => {
                 const isOverdue =
                   task.dueDate &&
                   new Date(task.dueDate) < new Date() &&
@@ -234,10 +250,7 @@ export default function TaskListView({
                 return (
                   <tr
                     key={task._id}
-                    className={cn(
-                      "group hover:bg-muted/30 transition-colors",
-                      isPending && "opacity-50",
-                    )}
+                    className={cn("group hover:bg-muted/30 transition-colors")}
                   >
                     <td className="px-6 py-3">
                       <Link
@@ -258,7 +271,6 @@ export default function TaskListView({
                         onChange={(e) =>
                           handleStatusChange(task._id, e.target.value)
                         }
-                        disabled={isPending}
                         className={cn(
                           "text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer",
                           STATUS_COLORS[task.status],
