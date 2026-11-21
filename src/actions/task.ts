@@ -246,12 +246,10 @@ export async function deleteTask(
     const { task } = await verifyTaskAccess(taskId, workspaceSlug, "delete");
 
     try {
-      await connectDB();
-
-      await Task.findByIdAndDelete(taskId);
-
-      revalidateProject(workspaceSlug, task.projectId.toString());
-
+      await deleteTasksWithRelated({
+        _id: task._id,
+        workspaceId: task.workspaceId,
+      });
       return { success: true };
     } catch (error) {
       console.error("Task delete error:", error);

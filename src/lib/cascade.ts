@@ -9,6 +9,10 @@ import { deleteFile } from "@/lib/cloudinary";
 export async function deleteTasksWithRelated(
   taskFilter: Record<string, unknown>,
 ): Promise<void> {
+  if (Object.keys(taskFilter).length === 0) {
+    throw new Error("deleteTasksWithRelated requires a non-empty filter");
+  }
+
   await connectDB();
 
   const tasks = await Task.find(taskFilter).select("_id").lean();
