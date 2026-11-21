@@ -22,6 +22,7 @@
   import type { TaskItem } from "@/lib/dal/task";
   import type { MemberWithUser } from "@/lib/dal/members";
   import { cn } from "@/lib/utils";
+  import { canModifyTask, type MemberRole } from "@/lib/permissions";
 
   export type TaskStatus = "todo" | "in-progress" | "in-review" | "done";
 
@@ -75,12 +76,7 @@
     
 
     const canDragTask = useCallback(
-      (task: TaskItem) => {
-        if (role === "owner" || role === "admin") return true;
-        if (task.createdBy === currentUserId) return true;
-        if (task.assigneeId === currentUserId) return true;
-        return false;
-      },
+      (task: TaskItem) => canModifyTask(task, currentUserId, role as MemberRole),
       [currentUserId, role],
     );
 
