@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const objectIdString = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID");
+
 export const createTaskSchema = z.object({
   title: z
     .string()
@@ -13,7 +15,7 @@ export const createTaskSchema = z.object({
     .optional(),
   status: z.enum(["todo", "in-progress", "in-review", "done"]).default("todo"),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
-  assigneeId: z.string().optional(),
+  assigneeId: objectIdString.or(z.literal("")).optional(),
   dueDate: z.string().optional(),
 });
 
