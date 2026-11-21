@@ -7,11 +7,12 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { getSafeCallbackUrl } from "@/lib/safe-redirect";
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/onboarding";
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
 
