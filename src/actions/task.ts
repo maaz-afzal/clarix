@@ -22,6 +22,10 @@ import mongoose from "mongoose";
 import { createNotification } from "@/lib/notifications";
 import { auth } from "@/lib/auth";
 import { safeAction } from "@/lib/errors";
+import {
+  findProjectInWorkspace,
+  validateAssignee,
+} from "@/lib/resource-access";
 
 interface TaskActionResult {
   success: boolean;
@@ -69,6 +73,20 @@ export async function createTask(
     if (!result.success) {
       return { success: false, error: result.error.errors[0].message };
     }
+
+    const project = await findProjectInWorkspace(projectId, membership.workspaceId);
+    if (!project) throw new Error("NOT_FOUND");
+    if (project.status === "archived") {
+      return { success: false, error: "This project is archived" };
+    }
+
+    const assigneeError = await validateAssignee({
+      userId,
+      role: membership.role as MemberRole,
+      workspaceId: membership.workspaceId,
+      assigneeId: result.data.assigneeId,
+    });
+    if (assigneeError) return { success: false, error: assigneeError };
 
     try {
       await connectDB();
@@ -125,14 +143,25 @@ export async function updateTask(
   data: UpdateTaskInput,
 ): Promise<TaskActionResult> {
   return safeAction(async () => {
-    const task = await verifyTaskAccess(taskId, workspaceSlug, "update");
+    const { task, userId, role } = await verifyTaskAccess(taskId, workspaceSlug, "update");
 
     const result = updateTaskSchema.safeParse(data);
     if (!result.success) {
       return { success: false, error: result.error.errors[0].message };
     }
-    const session = await auth();
-    const userId = session!.user!.id!;
+
+    if (result.data.assigneeId !== undefined) {
+      const changed = (task.assigneeId?.toString() ?? "") !== result.data.assigneeId;
+      if (changed) {
+        const assigneeError = await validateAssignee({
+          userId,
+          role,
+          workspaceId: task.workspaceId.toString(),
+          assigneeId: result.data.assigneeId,
+        });
+        if (assigneeError) return { success: false, error: assigneeError };
+      }
+    }
 
     try {
       await connectDB();
@@ -165,9 +194,9 @@ export async function updateTask(
       await Task.findByIdAndUpdate(taskId, { $set: updateData });
 
       if (
-        result.data.assigneeId !== undefined &&
         result.data.assigneeId &&
-        task.assigneeId?.toString() !== result.data.assigneeId
+        task.assigneeId?.toString() !== result.data.assigneeId &&
+        result.data.assigneeId !== userId
       ) {
         await createNotification({
           userId: result.data.assigneeId,
@@ -214,7 +243,7 @@ export async function deleteTask(
   taskId: string,
 ): Promise<TaskActionResult> {
   return safeAction(async () => {
-    const task = await verifyTaskAccess(taskId, workspaceSlug, "delete");
+    const { task } = await verifyTaskAccess(taskId, workspaceSlug, "delete");
 
     try {
       await connectDB();
