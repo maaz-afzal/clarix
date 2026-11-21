@@ -71,53 +71,51 @@ const authConfig: NextAuthConfig = {
       return true;
     },
 
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        const email = user.email?.toLowerCase();
-        if (!email) return false;
+    async signIn({ user, account, profile }) {
+      if (account?.provider !== "google") return true;
 
-        try {
-          await connectDB();
-          const existingUser = await User.findOne({ email });
+      const email = user.email?.toLowerCase();
+      if (!email) return false;
+      if (!profile?.email_verified) return false;
 
-          if (!existingUser) {
-            await User.create({
-              name: user.name ?? email.split("@")[0],
-              email,
-              image: user.image ?? undefined,
-              emailVerified: new Date(),
-            });
-          } else if (!existingUser.image && user.image) {
-            await User.findByIdAndUpdate(existingUser._id, {
-              image: user.image,
-            });
-          }
-        } catch (error) {
-          console.error("Google signIn error:", error);
-          return false;
+      try {
+        await connectDB();
+
+        const existingUser = await User.findOne({ email });
+
+        if (!existingUser) {
+          await User.create({
+            name: user.name ?? email.split("@")[0],
+            email,
+            image: user.image ?? undefined,
+            emailVerified: new Date(),
+          });
+        } else if (!existingUser.image && user.image) {
+          await User.findByIdAndUpdate(existingUser._id, {
+            image: user.image,
+          });
         }
+      } catch (error) {
+        console.error("Google signIn error:", error);
+        return false;
       }
+
       return true;
     },
 
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        const email = user.email?.toLowerCase();
+        if (!email) throw new Error("Sign-in without an email address");
 
-        if (user.id) {
-          try {
-            await connectDB();
-            const dbUser = await User.findById(user.id);
-            if (dbUser) {
-              token.id = dbUser._id.toString();
-              token.name = dbUser.name;
-              token.email = dbUser.email;
-              token.image = dbUser.image;
-            }
-          } catch (error) {
-            console.error("JWT callback error:", error);
-          }
-        }
+        await connectDB();
+        const dbUser = await User.findOne({ email });
+        if (!dbUser) throw new Error("User record missing after sign-in");
+
+        token.id = dbUser._id.toString();
+        token.name = dbUser.name;
+        token.email = dbUser.email;
+        token.image = dbUser.image;
       }
       return token;
     },
