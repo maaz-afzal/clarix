@@ -20,7 +20,6 @@ interface CommentSectionProps {
   comments: CommentItem[];
   workspaceSlug: string;
   taskId: string;
-  projectId: string;
   currentUserId: string;
   currentUserName: string;
   currentUserImage?: string;
@@ -31,7 +30,6 @@ export default function CommentSection({
   comments,
   workspaceSlug,
   taskId,
-  projectId,
   currentUserId,
   currentUserName,
   currentUserImage,
@@ -64,12 +62,7 @@ export default function CommentSection({
   function handleDelete(commentId: string) {
     if (!confirm("Are you sure you want to delete this comment?")) return;
     startTransition(async () => {
-      const result = await deleteComment(
-        workspaceSlug,
-        commentId,
-        taskId,
-        projectId,
-      );
+      const result = await deleteComment(workspaceSlug, commentId);
       if (!result.success)
         toast.error(result.error || "Could not delete comment");
       else toast.success("Comment deleted successfully");

@@ -32,7 +32,6 @@ export async function TaskComments({
       comments={comments}
       workspaceSlug={workspaceSlug}
       taskId={task._id}
-      projectId={projectId}
       currentUserId={user.id}
       currentUserName={user.name}
       currentUserImage={user.image}

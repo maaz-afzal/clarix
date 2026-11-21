@@ -1,15 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import connectDB from "@/lib/db";
-import Comment from "@/models/Comment";
-import Task from "@/models/Task";
 import { auth } from "@/lib/auth";
-import { verifyWorkspaceMember } from "@/lib/authorization";
+import { verifyPermission, verifyWorkspaceMember } from "@/lib/authorization";
 import { createCommentSchema } from "@/lib/validations/task";
 import mongoose from "mongoose";
+import Comment from "@/models/Comment";
 import { createNotification } from "@/lib/notifications";
 import { safeAction } from "@/lib/errors";
+import {
+  findTaskInWorkspace,
+  findCommentInWorkspace,
+} from "@/lib/resource-access";
 
 interface CommentResult {
   success: boolean;
@@ -22,24 +24,25 @@ export async function addComment(
   data: { content: string },
 ): Promise<CommentResult> {
   return safeAction(async () => {
-    const { userId } = await verifyWorkspaceMember(workspaceSlug);
+    const { userId, membership } = await verifyPermission(
+      workspaceSlug,
+      "comment_create",
+    );
 
     const result = createCommentSchema.safeParse(data);
     if (!result.success) {
       return { success: false, error: result.error.errors[0].message };
     }
 
+    const task = await findTaskInWorkspace(taskId, membership.workspaceId);
+    if (!task) throw new Error("NOT_FOUND");
+
     try {
-      await connectDB();
-
-      const task = await Task.findById(taskId).lean();
-      if (!task) return { success: false, error: "Task not found" };
-
       const session = await auth();
       const commenterName = session?.user?.name ?? "A user";
 
       await Comment.create({
-        taskId: new mongoose.Types.ObjectId(taskId),
+        taskId: task._id,
         userId: new mongoose.Types.ObjectId(userId),
         content: result.data.content,
       });
@@ -50,12 +53,13 @@ export async function addComment(
           workspaceId: task.workspaceId.toString(),
           type: "comment",
           message: `${commenterName} commented on your task: "${task.title}"`,
-          link: `/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${taskId}`,
+          link: `/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${task._id.toString()}`,
         });
       }
 
       revalidatePath(
-        `/${workspaceSlug}/projects/${task.projectId.toString()}/tasks/${taskId}`,
+        `/${workspaceSlug}/projects/${task.projectId.toString()}`,
+        "layout",
       );
 
       return { success: true };
@@ -69,33 +73,27 @@ export async function addComment(
 export async function deleteComment(
   workspaceSlug: string,
   commentId: string,
-  taskId: string,
-  projectId: string,
 ): Promise<CommentResult> {
   return safeAction(async () => {
-    const session = await auth();
-    if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+    const { userId, membership } = await verifyWorkspaceMember(workspaceSlug);
 
-    const { membership } = await verifyWorkspaceMember(workspaceSlug);
+    const found = await findCommentInWorkspace(commentId, membership.workspaceId);
+    if (!found) throw new Error("NOT_FOUND");
+
+    const isOwner = found.comment.userId.toString() === userId;
+    const isAdmin = ["owner", "admin"].includes(membership.role);
+
+    if (!isOwner && !isAdmin) {
+      return { success: false, error: "You are not the owner of this comment" };
+    }
 
     try {
-      await connectDB();
+      await Comment.findByIdAndDelete(found.comment._id);
 
-      const comment = await Comment.findById(commentId);
-      if (!comment) return { success: false, error: "Comment not found" };
-      const isOwner = comment.userId.toString() === session.user.id;
-      const isAdmin = ["owner", "admin"].includes(membership.role);
-
-      if (!isOwner && !isAdmin) {
-        return {
-          success: false,
-          error: "You are not the owner of this comment",
-        };
-      }
-
-      await Comment.findByIdAndDelete(commentId);
-
-      revalidatePath(`/${workspaceSlug}/projects/${projectId}/tasks/${taskId}`);
+      revalidatePath(
+        `/${workspaceSlug}/projects/${found.task.projectId.toString()}`,
+        "layout",
+      );
 
       return { success: true };
     } catch (error) {
