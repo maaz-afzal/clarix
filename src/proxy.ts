@@ -30,6 +30,12 @@ export default auth((request) => {
   }
 
   if (!isLoggedIn && !isPublicRoute) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "Please log in to continue" },
+        { status: 401 },
+      );
+    }
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
@@ -40,6 +46,6 @@ export default auth((request) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
