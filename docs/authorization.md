@@ -50,7 +50,32 @@
 | `invite/[token]/page.tsx:40` | "Home pe jao" | "Go to Home" |
 | `actions/ai.ts:135` | "Project mein tasks hone chahiye summary ke liye" | "Project must have tasks to generate a summary" |
 
-## Questions & Answers
+## Assignment Policy
+
+**Who can assign tasks?**
+
+| Role | Can Assign To | Notes |
+|------|---------------|-------|
+| Owner | Any workspace member | Full access |
+| Admin | Any workspace member | Full access |
+| Member | Self only | Cannot assign to others |
+
+**Implementation:**
+- `validateAssignee` in `src/lib/resource-access.ts` enforces this
+- If `assigneeId !== userId` and role lacks `task_assign` permission → `FORBIDDEN`
+- Assignee must be a workspace member (checked via `WorkspaceMember.exists`)
+- Self-assignment (`assigneeId === userId`) always allowed
+- Unassignment (`assigneeId` empty/unset) always allowed
+
+## Tenant Isolation Rule
+
+**Every data access must be scoped to the current workspace.** This applies at three layers:
+
+1. **Route guards**: `requireWorkspaceMember(workspaceSlug)` or `verifyWorkspaceMember(workspaceSlug)` at the top of every server action and layout/page.
+2. **Query scoping**: All database queries include `workspaceId` (or `workspaceId` from membership). DAL helpers like `findTaskInWorkspace`, `findProjectInWorkspace`, `findCommentInWorkspace` enforce this.
+3. **Post-fetch verification**: After fetching by ID, verify `resource.workspaceId === membership.workspaceId` before returning or mutating.
+
+**Why three layers?** Defense in depth. Route guards catch unauthorized access early. Query scoping prevents cross-tenant data leaks at the database level. Post-fetch verification catches any gaps (e.g., cached data, race conditions). The `NOT_FOUND` error for cross-workspace resources prevents tenant enumeration.
 
 ### 1. CreateTask assigneeId validation
 
