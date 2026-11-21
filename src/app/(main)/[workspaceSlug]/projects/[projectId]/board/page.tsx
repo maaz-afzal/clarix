@@ -6,11 +6,12 @@ import { notFound } from "next/navigation";
 import KanbanBoard from "@/components/tasks/kanban-board";
 import type { MemberRole } from "@/lib/authorization";
 import type { Metadata } from "next";
+import { getAuthorizedProjectName } from "@/lib/dal/metadata";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { projectId } = await params;
-  const project = await getProjectById(projectId);
-  return { title: project ? `Board | ${project.name}` : "Board" };
+  const { workspaceSlug, projectId } = await params;
+  const name = await getAuthorizedProjectName(workspaceSlug, projectId);
+  return { title: name ? `Board | ${name}` : "Board" };
 }
 
 type Props = {

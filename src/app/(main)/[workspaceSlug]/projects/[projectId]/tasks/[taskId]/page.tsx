@@ -1,6 +1,7 @@
 import TaskDetailView from "@/components/tasks/task-detail-view";
 import { getTaskById } from "@/lib/dal/task";
 import type { Metadata } from "next";
+import { getAuthorizedTaskTitle } from "@/lib/dal/metadata";
 
 type Props = {
   params: Promise<{
@@ -11,9 +12,9 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { taskId } = await params;
-  const task = await getTaskById(taskId);
-  return { title: task?.title ?? "Task" };
+  const { workspaceSlug, taskId } = await params;
+  const title = await getAuthorizedTaskTitle(workspaceSlug, taskId);
+  return { title: title ?? "Task" };
 }
 
 export default async function TaskDetailPage({ params }: Props) {

@@ -5,15 +5,16 @@ import Link from "next/link";
 import { KanbanSquare, List, BarChart3 } from "lucide-react";
 import type { MemberRole } from "@/lib/authorization";
 import type { Metadata } from "next";
+import { getAuthorizedProjectName } from "@/lib/dal/metadata";
 
 type Props = {
   params: Promise<{ workspaceSlug: string; projectId: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { projectId } = await params;
-  const project = await getProjectById(projectId);
-  return { title: project?.name ?? "Project" };
+  const { workspaceSlug, projectId } = await params;
+  const name = await getAuthorizedProjectName(workspaceSlug, projectId);
+  return { title: name ?? "Project" };
 }
 
 export default async function ProjectDetailPage({ params }: Props) {

@@ -7,11 +7,12 @@ import ProjectSummary from "@/components/ai/project-summary";
 import AnalyticsCharts from "@/components/analytics/analytics-charts";
 import EmptyState from "@/components/shared/empty-state";
 import type { Metadata } from "next";
+import { getAuthorizedProjectName } from "@/lib/dal/metadata";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { projectId } = await params;
-  const project = await getProjectById(projectId);
-  return { title: project ? `Analytics | ${project.name}` : "Analytics" };
+  const { workspaceSlug, projectId } = await params;
+  const name = await getAuthorizedProjectName(workspaceSlug, projectId);
+  return { title: name ? `Analytics | ${name}` : "Analytics" };
 }
 
 type Props = {

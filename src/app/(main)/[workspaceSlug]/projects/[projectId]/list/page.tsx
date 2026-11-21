@@ -6,11 +6,12 @@ import { notFound } from "next/navigation";
 import TaskListView from "@/components/tasks/task-list-view";
 import type { MemberRole } from "@/lib/authorization";
 import type { Metadata } from "next";
+import { getAuthorizedProjectName } from "@/lib/dal/metadata";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { projectId } = await params;
-  const project = await getProjectById(projectId);
-  return { title: project ? `Task List | ${project.name}` : "Task List" };
+  const { workspaceSlug, projectId } = await params;
+  const name = await getAuthorizedProjectName(workspaceSlug, projectId);
+  return { title: name ? `Task List | ${name}` : "Task List" };
 }
 
 type Props = {
