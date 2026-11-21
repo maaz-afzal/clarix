@@ -26,6 +26,7 @@ import {
   findProjectInWorkspace,
   validateAssignee,
 } from "@/lib/resource-access";
+import { deleteTasksWithRelated } from "@/lib/cascade";
 
 interface TaskActionResult {
   success: boolean;
