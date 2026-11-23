@@ -31,10 +31,13 @@ jobs:
         env:
           TEST_MONGODB_URI: mongodb://127.0.0.1:27017/clarix_test
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
         env:
-          MONGODB_URI: mongodb://127.0.0.1:27017/clarix_build
+          MONGODB_URI: mongodb://127.0.1:27017/clarix_build
           AUTH_SECRET: ci-only-secret
           AUTH_TRUST_HOST: "true"
           GOOGLE_GENERATIVE_AI_API_KEY: ci-placeholder

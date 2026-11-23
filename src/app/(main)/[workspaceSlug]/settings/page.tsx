@@ -64,7 +64,7 @@ export default async function SettingsPage({ params }: Props) {
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Your role is {membership.role} - you don't have permission to edit
+            Your role is {membership.role} - you don&apos;t have permission to edit
             settings
           </p>
         </div>

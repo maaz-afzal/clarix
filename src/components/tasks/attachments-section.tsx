@@ -9,6 +9,10 @@ import { deleteAttachment } from "@/actions/attachment";
 import FileUploader from "./file-uploader";
 import type { AttachmentItem } from "@/lib/dal/attachments";
 
+type UploadedAttachment = Omit<AttachmentItem, "uploadedBy"> & {
+  uploadedBy?: AttachmentItem["uploadedBy"];
+};
+
 interface AttachmentsSectionProps {
   initialAttachments: AttachmentItem[];
   workspaceSlug: string;
@@ -35,8 +39,8 @@ export default function AttachmentsSection({
   const [attachments, setAttachments] = useState(initialAttachments);
   const [isPending, startTransition] = useTransition();
 
-  function handleUploaded(newAttachment: AttachmentItem) {
-    setAttachments((prev) => [newAttachment, ...prev]);
+  function handleUploaded(newAttachment: UploadedAttachment) {
+    setAttachments((prev) => [newAttachment as AttachmentItem, ...prev]);
   }
 
   function handleDelete(attachmentId: string) {
@@ -72,7 +76,7 @@ export default function AttachmentsSection({
       <FileUploader
         workspaceSlug={workspaceSlug}
         taskId={taskId}
-        onUploaded={handleUploaded as any}
+        onUploaded={handleUploaded}
       />
 
       {attachments.length > 0 && (

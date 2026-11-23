@@ -15,6 +15,10 @@ interface FileUploaderProps {
     fileSize: number;
     format: string;
     createdAt: string;
+    uploadedBy?: {
+      name: string;
+      image?: string;
+    };
   }) => void;
 }
 

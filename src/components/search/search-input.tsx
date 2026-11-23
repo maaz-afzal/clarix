@@ -60,11 +60,14 @@ export default function SearchInput({
       } catch {}
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecentSearches(history);
   }, [defaultValue, searchCompleted, storageKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue(defaultValue);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setType(defaultType);
   }, [defaultValue, defaultType]);
 

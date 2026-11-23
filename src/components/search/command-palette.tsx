@@ -174,7 +174,7 @@ function PaletteBody({
             role="status"
             className="py-6 text-center text-sm text-muted-foreground"
           >
-            No results for "{trimmed}"
+            No results for &ldquo;{trimmed}&rdquo;
           </p>
         )}
 
@@ -226,7 +226,7 @@ function PaletteBody({
               }
             >
               <Search className="h-4 w-4" aria-hidden="true" />
-              See all results for "{trimmed}"
+              See all results for &ldquo;{trimmed}&rdquo;
             </CommandItem>
           </CommandGroup>
         )}

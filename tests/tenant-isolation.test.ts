@@ -87,6 +87,20 @@ describe("comments stay inside their workspace", () => {
     expect(result.success).toBe(true);
     expect(await Comment.exists({ _id: comment._id })).toBeNull();
   });
+
+  it("a member cannot delete another member's comment", async () => {
+    const comment = await Comment.create({
+      taskId: s.taskA._id,
+      userId: s.alice._id,
+      content: "alice's comment",
+    });
+
+    actAs(s.amy);
+    const result = await deleteComment("ws-a", comment._id.toString());
+
+    expect(result).toEqual({ success: false, error: "You are not the owner of this comment" });
+    expect(await Comment.exists({ _id: comment._id })).not.toBeNull();
+  });
 });
 
 describe("createTask validates its project and assignee", () => {
@@ -198,6 +212,35 @@ describe("updateTask", () => {
 
     expect(result.success).toBe(true);
     expect((await Task.findById(s.taskA._id))?.assigneeId ?? null).toBeNull();
+  });
+
+  it("a member cannot assign another member via updateTask", async () => {
+    // s.amy is a member, s.taskA was created by alice (owner)
+    // amy cannot assign it to anyone else
+    actAs(s.amy);
+    const result = await updateTask("ws-a", s.taskA._id.toString(), {
+      assigneeId: s.alice._id.toString(),
+    });
+
+    expect(result).toEqual({ success: false, error: "You do not have permission to do this" });
+    expect((await Task.findById(s.taskA._id))?.assigneeId ?? null).toBeNull();
+  });
+
+  it("a member can assign themselves via updateTask if already assignee", async () => {
+    // First assign the task to amy (as owner)
+    actAs(s.alice);
+    await updateTask("ws-a", s.taskA._id.toString(), {
+      assigneeId: s.amy._id.toString(),
+    });
+
+    // Now amy can re-assign it to herself
+    actAs(s.amy);
+    const result = await updateTask("ws-a", s.taskA._id.toString(), {
+      assigneeId: s.amy._id.toString(),
+    });
+
+    expect(result.success).toBe(true);
+    expect((await Task.findById(s.taskA._id))?.assigneeId?.toString()).toBe(s.amy._id.toString());
   });
 });
 

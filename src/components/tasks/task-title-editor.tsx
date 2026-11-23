@@ -24,7 +24,9 @@ export default function TaskTitleEditor({
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(task.title);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDescription(task.description ?? "");
   }, [task.title, task.description]);
 

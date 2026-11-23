@@ -37,7 +37,7 @@ export default function CreateProjectDialog({
         <DialogHeader>
           <DialogTitle>New Project</DialogTitle>
           <DialogDescription>
-            Choose the project's name, description, and color.
+            Choose the project&apos;s name, description, and color.
           </DialogDescription>
         </DialogHeader>
 

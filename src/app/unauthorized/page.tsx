@@ -10,7 +10,7 @@ export default function UnauthorizedPage() {
         </div>
         <h1 className="text-2xl font-bold">No Access</h1>
         <p className="text-muted-foreground">
-          You don't have access to this workspace or it doesn't exist.
+          You don&apos;t have access to this workspace or it doesn&apos;t exist.
         </p>
         <Link
           href="/"
