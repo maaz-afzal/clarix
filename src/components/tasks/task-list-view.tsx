@@ -67,7 +67,10 @@ export default function TaskListView({
 
   const [optimisticTasksWithDelete, setOptimisticDelete] = useOptimistic(
     optimisticTasks,
-    (current: TaskItem[], update: { taskId: string; deleted?: boolean; task?: TaskItem }) => {
+    (
+      current: TaskItem[],
+      update: { taskId: string; deleted?: boolean; task?: TaskItem },
+    ) => {
       if (update.deleted) {
         return current.filter((t) => t._id !== update.taskId);
       }
@@ -99,7 +102,9 @@ export default function TaskListView({
 
     startTransition(async () => {
       setOptimisticStatus({ taskId, status });
-      const result = await callAction(() => updateTask(workspaceSlug, taskId, { status }));
+      const result = await callAction(() =>
+        updateTask(workspaceSlug, taskId, { status }),
+      );
       if (!result.success) {
         toast.error(result.error ?? "Failed to update task status");
       }
@@ -237,28 +242,141 @@ export default function TaskListView({
             )}
           </EmptyState>
         ) : (
-          <table className="w-full min-w-180 text-sm">
-            <thead className="border-b bg-muted/30 sticky top-0">
-              <tr>
-                <th className="text-left px-6 py-3 font-medium text-muted-foreground w-[40%]">
-                  Title
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                  Priority
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                  Assignee
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                  Due Date
-                </th>
-                <th className="px-4 py-3 w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+          <>
+            {/* Tablet-landscape aur upar: table */}
+            <table className="hidden w-full min-w-180 text-sm lg:table">
+              <thead className="border-b bg-muted/30 sticky top-0">
+                <tr>
+                  <th className="text-left px-6 py-3 font-medium text-muted-foreground w-[40%]">
+                    Title
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                    Priority
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                    Assignee
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                    Due Date
+                  </th>
+                  <th className="px-4 py-3 w-10" />
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {optimisticTasksWithDelete.map((task) => {
+                  const isOverdue =
+                    task.dueDate &&
+                    new Date(task.dueDate) < new Date() &&
+                    task.status !== "done";
+
+                  return (
+                    <tr
+                      key={task._id}
+                      className={cn(
+                        "group hover:bg-muted/30 transition-colors",
+                      )}
+                    >
+                      <td className="px-6 py-3">
+                        <Link
+                          href={`/${workspaceSlug}/projects/${projectId}/tasks/${task._id}`}
+                          className="font-medium line-clamp-1 hover:underline hover:text-primary transition-colors"
+                        >
+                          {task.title}
+                        </Link>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                            {task.description}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={task.status}
+                          onChange={(e) =>
+                            handleStatusChange(task._id, e.target.value)
+                          }
+                          className={cn(
+                            "text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer",
+                            STATUS_COLORS[task.status],
+                          )}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s.replace("-", " ")}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={cn(
+                            "text-xs px-2 py-0.5 rounded-full font-medium",
+                            PRIORITY_COLORS[task.priority],
+                          )}
+                        >
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {task.assignee ? (
+                          <div className="flex items-center gap-2">
+                            <UserAvatar
+                              name={task.assignee.name}
+                              image={task.assignee.image}
+                              size={20}
+                              decorative
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {task.assignee.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {task.dueDate ? (
+                          <span
+                            className={cn(
+                              "text-xs",
+                              isOverdue
+                                ? "text-destructive font-medium"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {formatDate(task.dueDate)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            No date
+                          </span>
+                        )}
+                      </td>
+                      {canManage && (
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(task._id)}
+                            disabled={isPending}
+                            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Phone aur tablet-portrait: stacked cards */}
+            <div className="divide-y lg:hidden">
               {optimisticTasksWithDelete.map((task) => {
                 const isOverdue =
                   task.dueDate &&
@@ -266,24 +384,34 @@ export default function TaskListView({
                   task.status !== "done";
 
                 return (
-                  <tr
-                    key={task._id}
-                    className={cn("group hover:bg-muted/30 transition-colors")}
-                  >
-                    <td className="px-6 py-3">
+                  <div key={task._id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
                       <Link
                         href={`/${workspaceSlug}/projects/${projectId}/tasks/${task._id}`}
-                        className="font-medium line-clamp-1 hover:underline hover:text-primary transition-colors"
+                        className="font-medium hover:underline hover:text-primary transition-colors"
                       >
                         {task.title}
                       </Link>
-                      {task.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                          {task.description}
-                        </p>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(task._id)}
+                          disabled={isPending}
+                          className="shrink-0 text-destructive disabled:opacity-50"
+                          aria-label="Delete task"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
+                    </div>
+
+                    {task.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {task.description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
                       <select
                         value={task.status}
                         onChange={(e) =>
@@ -300,8 +428,7 @@ export default function TaskListView({
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td className="px-4 py-3">
+
                       <span
                         className={cn(
                           "text-xs px-2 py-0.5 rounded-full font-medium",
@@ -310,56 +437,39 @@ export default function TaskListView({
                       >
                         {task.priority}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
+
                       {task.assignee ? (
-                        <div className="flex items-center gap-2">
-                          <UserAvatar name={task.assignee.name} image={task.assignee.image} size={20} decorative />
-                          <span className="text-xs text-muted-foreground">
-                            {task.assignee.name}
-                          </span>
-                        </div>
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <UserAvatar
+                            name={task.assignee.name}
+                            image={task.assignee.image}
+                            size={16}
+                            decorative
+                          />
+                          {task.assignee.name}
+                        </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">
                           Unassigned
                         </span>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {task.dueDate ? (
-                        <span
-                          className={cn(
-                            "text-xs",
-                            isOverdue
-                              ? "text-destructive font-medium"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {formatDate(task.dueDate)}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          No date
-                        </span>
-                      )}
-                    </td>
-                    {canManage && (
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(task._id)}
-                          disabled={isPending}
-                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-xs text-destructive hover:underline disabled:opacity-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    )}
-                  </tr>
+
+                      <span
+                        className={cn(
+                          "text-xs",
+                          isOverdue
+                            ? "text-destructive font-medium"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {task.dueDate ? formatDate(task.dueDate) : "No date"}
+                      </span>
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
     </div>
