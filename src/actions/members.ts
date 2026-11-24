@@ -32,7 +32,7 @@ export async function inviteMember(
 
     const result = inviteMemberSchema.safeParse(data);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     const { email, role } = result.data;
@@ -155,7 +155,7 @@ export async function updateMemberRole(
 
     const result = updateMemberRoleSchema.safeParse({ role: newRole });
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     try {

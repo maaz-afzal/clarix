@@ -31,7 +31,7 @@ export async function addComment(
 
     const result = createCommentSchema.safeParse(data);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     const task = await findTaskInWorkspace(taskId, membership.workspaceId);

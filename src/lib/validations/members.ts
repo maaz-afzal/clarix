@@ -3,7 +3,7 @@ import { z } from "zod";
 export const inviteMemberSchema = z.object({
   email: z.string().email("Valid email address required").toLowerCase().trim(),
   role: z.enum(["admin", "member"], {
-    errorMap: () => ({ message: "Role must be either admin or member" }),
+    error: "Role must be either admin or member",
   }),
 });
 

@@ -72,7 +72,7 @@ export async function createTask(
 
     const result = createTaskSchema.safeParse(data);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     const project = await findProjectInWorkspace(projectId, membership.workspaceId);
@@ -148,7 +148,7 @@ export async function updateTask(
 
     const result = updateTaskSchema.safeParse(data);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     if (result.data.assigneeId !== undefined) {

@@ -52,7 +52,7 @@ export async function generateTaskBreakdown(
 
     const result = generateTaskBreakdownSchema.safeParse(input);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     const { title, description, projectName } = result.data;
@@ -187,7 +187,7 @@ export async function generatePrioritySuggestion(
     }
     const result = generatePrioritySuggestionSchema.safeParse(input);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     const { title, description } = result.data;

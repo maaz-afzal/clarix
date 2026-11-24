@@ -24,7 +24,7 @@ export async function updateProfile(
 
     const result = updateProfileSchema.safeParse(input);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     try {

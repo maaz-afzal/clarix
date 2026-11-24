@@ -33,7 +33,7 @@ export async function createProject(
 
     const result = createProjectSchema.safeParse(data);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     try {
@@ -71,7 +71,7 @@ export async function updateProject(
 
     const result = updateProjectSchema.safeParse(data);
     if (!result.success) {
-      return { success: false, error: result.error.errors[0].message };
+      return { success: false, error: result.error.issues[0].message };
     }
 
     try {
