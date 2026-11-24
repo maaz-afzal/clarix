@@ -76,8 +76,11 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Email</label>
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
           <input
+            id="email"
             type="email"
             value={user.email}
             disabled

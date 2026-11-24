@@ -160,6 +160,7 @@ export default function WorkspaceSwitcher({
         type="button"
         onClick={handleCreateWorkspace}
         title={isCollapsed ? "Create workspace" : undefined}
+        aria-label={isCollapsed ? "Create workspace" : undefined}
         className={cn(
           "mt-1.5 flex h-10 w-full items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
           isCollapsed ? "justify-center px-0" : "gap-2.5 px-2",

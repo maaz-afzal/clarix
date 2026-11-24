@@ -136,6 +136,7 @@ export default function Sidebar({
               href={item.href}
               onClick={onNavigate}
               title={isCollapsed ? item.label : undefined}
+              aria-label={isCollapsed ? item.label : undefined}
               className={cn(
                 "flex items-center rounded-md text-sm transition-colors",
                 isCollapsed ? "h-10 justify-center px-0" : "gap-3 px-3 py-2",
@@ -174,6 +175,7 @@ export default function Sidebar({
                     href={`/${workspaceSlug}/projects/${project._id}`}
                     onClick={onNavigate}
                     title={isCollapsed ? project.name : undefined}
+                    aria-label={isCollapsed ? project.name : undefined}
                     className={cn(
                       "flex items-center rounded-md text-sm transition-colors",
                       isCollapsed

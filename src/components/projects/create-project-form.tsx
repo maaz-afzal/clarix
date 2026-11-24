@@ -108,19 +108,30 @@ export default function CreateProjectForm({
 
       {/* Color Picker */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Color</label>
-        <div className="flex gap-2 flex-wrap">
+        <span id="create-project-color-label" className="text-sm font-medium">
+          Color
+        </span>
+        <div
+          role="group"
+          aria-labelledby="create-project-color-label"
+          className="flex gap-2 flex-wrap"
+        >
           {PROJECT_COLORS.map((color) => (
             <button
               key={color}
               type="button"
               onClick={() => setValue("color", color)}
               disabled={isPending}
-              className="w-7 h-7 rounded-full transition-transform hover:scale-110 disabled:opacity-50"
+              aria-label={`Color ${color}`}
+              aria-pressed={selectedColor === color}
+              className="w-7 h-7 rounded-full transition-transform hover:scale-110 disabled:opacity-50 flex items-center justify-center"
               style={{ backgroundColor: color }}
             >
               {selectedColor === color && (
-                <span className="flex items-center justify-center text-white text-xs font-bold">
+                <span
+                  aria-hidden="true"
+                  className="text-white text-xs font-bold"
+                >
                   ✓
                 </span>
               )}
