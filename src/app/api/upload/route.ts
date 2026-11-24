@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
       fileName: file.name,
       fileSize: file.size,
       format: uploadResult.format,
+      resourceType: uploadResult.resourceType,
     });
 
     return NextResponse.json({

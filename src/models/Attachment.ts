@@ -10,6 +10,7 @@ export interface IAttachment extends Document {
   fileName: string;
   fileSize: number;
   format: string;
+  resourceType: string;
   createdAt: Date;
 }
 
@@ -35,6 +36,7 @@ const AttachmentSchema = new Schema<IAttachment>(
     fileName: { type: String, required: true },
     fileSize: { type: Number, required: true },
     format: { type: String, required: true },
+    resourceType: { type: String, required: true, default: "image" },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );

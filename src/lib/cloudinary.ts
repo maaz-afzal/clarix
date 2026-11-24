@@ -14,6 +14,7 @@ export interface UploadResult {
   fileName: string;
   fileSize: number;
   format: string;
+  resourceType: string;
 }
 
 export async function uploadFile(
@@ -38,6 +39,7 @@ export async function uploadFile(
             fileName,
             fileSize: result.bytes,
             format: result.format,
+            resourceType: result.resource_type,
           });
         }
       },
@@ -47,6 +49,9 @@ export async function uploadFile(
   });
 }
 
-export async function deleteFile(publicId: string): Promise<void> {
-  await cloudinary.uploader.destroy(publicId);
+export async function deleteFile(
+  publicId: string,
+  resourceType: string = "image",
+): Promise<void> {
+  await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 }

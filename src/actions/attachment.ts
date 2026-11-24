@@ -48,7 +48,7 @@ export async function deleteAttachment(
         };
       }
 
-      await deleteFile(attachment.publicId);
+      await deleteFile(attachment.publicId, attachment.resourceType ?? "image");
 
       await Attachment.findByIdAndDelete(attachmentId);
 

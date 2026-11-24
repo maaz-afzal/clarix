@@ -169,33 +169,30 @@ export async function deleteWorkspace(
     try {
       await connectDB();
 
-      const workspaceObjectId = new Types.ObjectId(
-        membership.workspaceId,
-      );
+      const workspaceObjectId = new Types.ObjectId(membership.workspaceId);
 
-      // Get all task IDs in this workspace to cascade delete
       const tasks = await Task.find({ workspaceId: workspaceObjectId })
         .select("_id")
         .lean();
 
       const taskIds = tasks.map((t) => t._id);
 
-      // Delete related data for all tasks in workspace
       if (taskIds.length > 0) {
         await Promise.all([
           Comment.deleteMany({ taskId: { $in: taskIds } }),
           Activity.deleteMany({ taskId: { $in: taskIds } }),
         ]);
 
-        // Get attachments to delete Cloudinary files first
         const attachments = await Attachment.find({ taskId: { $in: taskIds } })
-          .select("publicId")
+          .select("publicId resourceType")
           .lean();
 
         if (attachments.length > 0) {
           const { deleteFile } = await import("@/lib/cloudinary");
           const cloudinaryResults = await Promise.allSettled(
-            attachments.map((a) => deleteFile(a.publicId)),
+            attachments.map((a) =>
+              deleteFile(a.publicId, a.resourceType ?? "image"),
+            ),
           );
 
           cloudinaryResults.forEach((result, index) => {

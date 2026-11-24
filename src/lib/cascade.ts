@@ -27,12 +27,12 @@ export async function deleteTasksWithRelated(
   ]);
 
   const attachments = await Attachment.find({ taskId: { $in: taskIds } })
-    .select("publicId")
+    .select("publicId resourceType")
     .lean();
 
   if (attachments.length > 0) {
     const cloudinaryResults = await Promise.allSettled(
-      attachments.map((a) => deleteFile(a.publicId)),
+      attachments.map((a) => deleteFile(a.publicId, a.resourceType ?? "image")),
     );
 
     cloudinaryResults.forEach((result, index) => {
