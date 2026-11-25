@@ -84,13 +84,16 @@ export default function WorkspaceShell({
         Skip to main content
       </a>
 
-      {mobileOpen && (
-        <button
-          type="button"
-          onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] md:hidden"
-        />
-      )}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(false)}
+        aria-hidden={!mobileOpen}
+        tabIndex={mobileOpen ? 0 : -1}
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 md:hidden",
+          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      />
 
       <button
         type="button"
