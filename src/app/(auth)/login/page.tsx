@@ -8,7 +8,15 @@ export const metadata: Metadata = {
   description: "Sign in to your Clarix account",
 };
 
-export default function LoginPage() {
+type Props = {
+  searchParams: Promise<{ callbackUrl?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: Props) {
+  const { callbackUrl } = await searchParams;
+  const registerHref = callbackUrl
+    ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : "/register";
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="text-center space-y-2">
@@ -28,7 +36,7 @@ export default function LoginPage() {
         <p className="text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
           <Link
-            href="/register"
+            href={registerHref}
             className="text-primary font-medium hover:underline"
           >
             Sign up free

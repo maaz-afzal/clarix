@@ -33,12 +33,17 @@ export async function uploadFile(
       (error, result) => {
         if (error) reject(error);
         else if (result) {
+          let format = result.format;
+          if (!format) {
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            if (ext) format = ext;
+          }
           resolve({
             url: result.secure_url,
             publicId: result.public_id,
             fileName,
             fileSize: result.bytes,
-            format: result.format,
+            format: format || "unknown",
             resourceType: result.resource_type,
           });
         }

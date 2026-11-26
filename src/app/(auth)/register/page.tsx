@@ -1,11 +1,12 @@
-import type { Metadata } from "next"
-import RegisterForm from "@/components/auth/register-form"
-import Link from "next/link"
+import type { Metadata } from "next";
+import RegisterForm from "@/components/auth/register-form";
+import Link from "next/link";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Create Account",
   description: "Create your free Clarix account",
-}
+};
 
 export default function RegisterPage() {
   return (
@@ -18,7 +19,9 @@ export default function RegisterPage() {
       </div>
 
       <div className="bg-card border rounded-xl p-6 shadow-sm">
-        <RegisterForm />
+        <Suspense fallback={null}>
+          <RegisterForm />
+        </Suspense>
       </div>
 
       <div className="text-center space-y-2">
@@ -39,5 +42,5 @@ export default function RegisterPage() {
         </Link>
       </div>
     </div>
-  )
+  );
 }

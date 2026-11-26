@@ -4,13 +4,16 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { registerUser } from "@/actions/auth";
+import { getSafeCallbackUrl } from "@/lib/safe-redirect";
 
 export default function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
 
@@ -44,14 +47,14 @@ export default function RegisterForm() {
       }
 
       toast.success("Welcome to Clarix!");
-      router.push("/onboarding");
+      router.push(callbackUrl);
       router.refresh();
     });
   }
 
   function handleGoogleLogin() {
     startGoogleTransition(async () => {
-      await signIn("google", { redirectTo: "/onboarding" });
+      await signIn("google", { redirectTo: callbackUrl });
     });
   }
 
