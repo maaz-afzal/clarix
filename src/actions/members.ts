@@ -227,7 +227,7 @@ export async function acceptInvitation(token: string): Promise<{
 
       const invitation = await Invitation.findOne({
         token,
-        status: "pending",
+        status: { $in: ["pending", "accepted"] },
         expiresAt: { $gt: new Date() },
       }).populate<{
         workspaceId: { _id: mongoose.Types.ObjectId; slug: string };
@@ -240,7 +240,6 @@ export async function acceptInvitation(token: string): Promise<{
         };
       }
 
-      // Check if the invitation email matches the logged-in user's email
       const sessionEmail = session.user.email?.toLowerCase();
       if (!sessionEmail || invitation.email !== sessionEmail) {
         return {
@@ -264,6 +263,13 @@ export async function acceptInvitation(token: string): Promise<{
           status: "accepted",
         });
         return { success: true, workspaceSlug: workspace.slug };
+      }
+
+      if (invitation.status !== "pending") {
+        return {
+          success: false,
+          error: "Invitation is not valid or has expired",
+        };
       }
 
       await WorkspaceMember.create({
