@@ -58,6 +58,20 @@ const FEATURES = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Clarix",
+            applicationCategory: "BusinessApplication",
+            operatingSystem: "Web",
+            description:
+              "Manage projects, collaborate with your team, and use AI to plan smarter. Built for modern teams.",
+          }),
+        }}
+      />
       <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
