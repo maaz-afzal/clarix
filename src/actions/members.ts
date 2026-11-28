@@ -13,6 +13,7 @@ import {
 } from "@/lib/validations/members";
 import mongoose from "mongoose";
 import { safeAction } from "@/lib/errors";
+import { siteConfig } from "@/lib/site";
 import { auth } from "@/lib/auth";
 
 interface ActionResult {
@@ -80,7 +81,7 @@ export async function inviteMember(
         expiresAt,
       });
 
-      const inviteUrl = `${process.env.NEXTAUTH_URL}/invite/${token}`;
+      const inviteUrl = `${siteConfig.url}/invite/${token}`;
       console.log(`Invite URL for ${email}: ${inviteUrl}`);
 
       revalidatePath(`/${workspaceSlug}/settings/members`);

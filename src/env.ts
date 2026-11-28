@@ -15,9 +15,7 @@ function validateEnv() {
   }
 }
 
-if (process.env.NODE_ENV !== "production") {
-  validateEnv();
-}
+validateEnv();
 
 export const env = {
   MONGODB_URI: process.env.MONGODB_URI!,
