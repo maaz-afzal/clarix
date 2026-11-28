@@ -17,6 +17,10 @@ export default auth((request) => {
 
   const isApiAuthRoute = pathname.startsWith("/api/auth");
 
+  if (pathname.startsWith("/monitoring")) {
+    return NextResponse.next();
+  }
+
   if (isApiAuthRoute) {
     return NextResponse.next();
   }
